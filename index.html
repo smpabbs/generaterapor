@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Rapor SMP ABBS (V20 - Interactive Strike)</title>
+    
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        /* --- LAYOUT & RESET --- */
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #525659; display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 340px; background: #f8f9fa; border-right: 1px solid #ddd;
+            display: flex; flex-direction: column; padding: 20px; box-sizing: border-box;
+            overflow-y: auto; z-index: 100; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            transition: margin-left 0.3s ease; padding-top: 50px;
+        }
+        .sidebar.closed { margin-left: -340px; }
+
+        #toggleSidebarBtn {
+            position: absolute; top: 10px; left: 10px; z-index: 200;
+            background: #343a40; color: white; border: none; padding: 8px 12px;
+            border-radius: 4px; cursor: pointer; font-size: 18px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        #toggleSidebarBtn:hover { background: #23272b; }
+
+        .sidebar h2 { margin-top: 0; font-size: 18px; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        fieldset { border: 1px solid #ccc; border-radius: 5px; margin-bottom: 12px; padding: 10px; background: white; }
+        legend { font-size: 11px; font-weight: bold; color: #007bff; text-transform: uppercase; padding: 0 5px; }
+        .input-group { margin-bottom: 8px; display: flex; flex-direction: column; }
+        .input-group label { font-size: 11px; font-weight: bold; margin-bottom: 2px; color: #555; }
+        input[type="text"], select { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; width: 100%; box-sizing: border-box; }
+        
+        .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        button.action-btn { padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;}
+        .btn-blue { background: #007bff; color: white; } .btn-blue:hover { background: #0056b3; }
+        .btn-green { background: #28a745; color: white; } .btn-green:hover { background: #218838; }
+        .btn-orange { background: #fd7e14; color: white; } .btn-orange:hover { background: #e36a09; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+
+        #zipProgressContainer { margin-top: 10px; display: none; }
+        #zipProgressBar { width: 100%; height: 10px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden; }
+        #zipProgressFill { height: 100%; width: 0%; background-color: #28a745; transition: width 0.3s; }
+        #zipStatusText { font-size: 11px; text-align: center; margin-top: 3px; color: #333; }
+
+        /* --- MAIN CONTENT --- */
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; transition: padding-left 0.3s; }
+
+        /* --- KERTAS A4 --- */
+        .sheet {
+            background: white; width: 210mm; height: 297mm;
+            padding: 10mm 10mm 25mm 10mm; margin-bottom: 30px; box-sizing: border-box;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; position: relative; overflow: hidden; flex-shrink: 0;
+        }
+        .sheet * { font-family: 'Times New Roman', Times, serif; }
+        .content-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        .header-container { margin-bottom: 10px; border-bottom: 3px double black; padding-bottom: 5px; }
+        h1.judul-rapor { font-size: 14pt; margin: 10px 0 5px 0; text-align: center; font-weight: bold; text-transform: uppercase; }
+        
+        table.identitas { width: 100%; border-collapse: collapse; font-size: 11pt; table-layout: fixed; }
+        table.identitas td { padding: 2px 0; vertical-align: top; border: none; }
+
+        .sheet h3 { font-size: 12pt; margin: 15px 0 5px 0; font-weight: bold; }
+        
+        table.data-table, table.koku-table, table.absensi-table { width: 100%; border-collapse: collapse; font-size: 11pt; margin-bottom: 5px; }
+        table.data-table th, table.data-table td { border: 1px solid black; padding: 4px 6px; vertical-align: top; }
+        table.data-table th, table.koku-table th { background: #f2f2f2; font-weight: bold; text-align: center; vertical-align: middle; }
+        
+        table.koku-table th { border: 1px solid black; padding: 5px; }
+        table.koku-table td { border: 1px solid black; padding: 10px; vertical-align: top; text-align: justify; min-height: 60px; }
+        table.absensi-table td { border: 1px solid black; padding: 4px 6px; }
+
+        .catatan-box { width: 100%; border: 1px solid black; padding: 10px; min-height: 80px; box-sizing: border-box; font-size: 11pt; margin-bottom: 10px; }
+        
+        .footer { position: absolute; bottom: 10mm; left: 10mm; right: 10mm; height: 15mm; border-top: 1px solid black; padding-top: 5px; font-size: 10pt; display: flex; justify-content: space-between; align-items: center; }
+
+        .center { text-align: center; } .bold { font-weight: bold; }
+        .signature-section { margin-top: 20px; display: flex; justify-content: space-between; }
+        .sign-box { width: 35%; text-align: center; }
+        .headmaster { text-align: center; margin-top: 30px; }
+        .space-sign { height: 75px; }
+
+        /* --- CSS KHUSUS TOGGLE STRIKE --- */
+        .toggle-text {
+            cursor: pointer;
+            padding: 0 2px;
+            transition: color 0.2s;
+        }
+        .toggle-text:hover {
+            background-color: #ffff99; /* Highlight saat hover */
+        }
+        .is-crossed {
+            text-decoration: line-through;
+            color: #555;
+        }
+
+        @media print {
+            body { display: block; background: white; height: auto; overflow: visible; }
+            .sidebar, #toggleSidebarBtn { display: none; }
+            .main-content { padding: 0; display: block; overflow: visible; }
+            .sheet { margin: 0; box-shadow: none; page-break-after: always; width: 100%; height: 297mm; }
+            @page { size: A4; margin: 0; }
+            
+            /* Pastikan coretan tercetak */
+            .is-crossed { text-decoration: line-through !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <button id="toggleSidebarBtn" onclick="toggleSidebar()" title="Sembunyikan/Tampilkan Sidebar">☰</button>
+
+    <div class="sidebar" id="sidebarPanel">
+        <h2>🛠️ Generator Rapor</h2>
+        
+        <fieldset>
+            <legend>📂 File & Kelas</legend>
+            <div class="input-group">
+                <label style="color:#d9534f;">1. Upload File Excel</label>
+                <input type="file" id="fileInput" accept=".xlsx, .xls">
+            </div>
+            <div class="input-group">
+                <label style="color:#007bff;">2. Pilih Sheet (Auto Kelas)</label>
+                <select id="sheetSelect" disabled onchange="autoFillClass()">
+                    <option value="">-- Upload Dulu --</option>
+                </select>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>🏫 Info Sekolah</legend>
+            <div class="input-group"><label>Nama Sekolah</label><input type="text" id="inpSekolah" value="SMP ABBS Surakarta"></div>
+            <div class="input-group"><label>Alamat</label><input type="text" id="inpAlamat" value="Jl. Tarumanegara III, Banyuanyar, Banjarsari, Surakarta"></div>
+            <div class="input-group"><label>Kepala Sekolah</label><input type="text" id="inpKepsek" value="Tri Wijayanti, M.Pd"></div>
+        </fieldset>
+
+        <fieldset>
+            <legend>📅 Data Akademik</legend>
+            <div class="input-group"><label>Kelas (Otomatis)</label><input type="text" id="inpKelas" placeholder="Pilih Sheet dulu..."></div>
+            <div class="input-group"><label>Fase</label><input type="text" id="inpFase" value="D"></div>
+            <div class="input-group"><label>Semester</label><select id="inpSem"><option value="1 (Ganjil)" selected>1 (Ganjil)</option><option value="2 (Genap)">2 (Genap)</option></select></div>
+            <div class="input-group">
+                <label>Tahun Pelajaran</label>
+                <select id="inpThn">
+                    <option value="2025/2026" selected>2025/2026</option>
+                    <option value="2026/2027">2026/2027</option>
+                    <option value="2027/2028">2027/2028</option>
+                    <option value="2028/2029">2028/2029</option>
+                    <option value="2029/2030">2029/2030</option>
+                    <option value="2030/2031">2030/2031</option>
+                </select>
+            </div>
+            <div class="input-group"><label>Tanggal Rapor</label><input type="text" id="inpTgl" value="Surakarta, 20 Desember 2025"></div>
+        </fieldset>
+
+        <fieldset>
+            <legend>✍️ Wali Kelas</legend>
+            <div class="input-group"><label>Nama Wali Kelas</label><input type="text" id="inpWali" value="Febriyono S. Pd, M.Bg"></div>
+            <div class="input-group"><label>NIP Wali Kelas</label><input type="text" id="inpNIP" value="-"></div>
+        </fieldset>
+
+        <div class="btn-group">
+            <button class="action-btn btn-blue" onclick="renderPreview()">👁️ Tampilkan Preview</button>
+            <button class="action-btn btn-green" onclick="cetakPDF()">🖨️ Cetak Semua PDF</button>
+            <button class="action-btn btn-orange" id="btnZip" onclick="downloadZIP()">📦 Download ZIP</button>
+        </div>
+
+        <div id="zipProgressContainer">
+            <div id="zipProgressBar"><div id="zipProgressFill"></div></div>
+            <div id="zipStatusText">Memproses: 0%</div>
+        </div>
+        
+        <div style="margin-top:15px; font-size:11px; color:#666; text-align:center;">
+            <i>*Tip: Klik teks "Kepramukaan" atau "PMR" di preview untuk mencoret.</i>
+        </div>
+    </div>
+
+    <div class="main-content" id="outputArea">
+        <div style="color:white; margin-top:50px; text-align:center;">
+            <h3>Selamat Datang</h3>
+            <p>Upload file, pilih kelas di sidebar, lalu klik tombol Preview.</p>
+        </div>
+    </div>
+
+    <div id="hiddenContainer" style="position:fixed; left:-9999px; top:0;"></div>
+
+    <script>
+        let globalWorkbook = null;
+
+        // FUNGSI GLOBAL UNTUK TOGGLE STRIKE
+        function toggleStrike(element) {
+            element.classList.toggle('is-crossed');
+        }
+
+        function toTitleCase(str) {
+            if (!str) return "";
+            return str.toLowerCase().split(' ').map(function(word) {
+                return (word.charAt(0).toUpperCase() + word.slice(1));
+            }).join(' ');
+        }
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebarPanel');
+            sb.classList.toggle('closed');
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                globalWorkbook = XLSX.read(data, {type: 'array'});
+                
+                const sheetSelect = document.getElementById('sheetSelect');
+                sheetSelect.innerHTML = "";
+                
+                globalWorkbook.SheetNames.forEach(sheetName => {
+                    const option = document.createElement('option');
+                    option.value = sheetName;
+                    option.textContent = sheetName;
+                    sheetSelect.appendChild(option);
+                });
+                
+                sheetSelect.disabled = false;
+                autoFillClass(); 
+                alert("File dimuat! Silakan cek kolom Kelas.");
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function autoFillClass() {
+            const sheetName = document.getElementById('sheetSelect').value;
+            if(!sheetName) return;
+            const match = sheetName.match(/([789][A-Z])/i);
+            const inpKelas = document.getElementById('inpKelas');
+            if (match) {
+                inpKelas.value = match[0].toUpperCase();
+            } else {
+                inpKelas.value = sheetName;
+            }
+            updateFileName();
+        }
+
+        function updateFileName() {
+            const cls = document.getElementById('inpKelas').value;
+            if (cls) {
+                document.title = "Rapor dina kelas " + cls;
+            } else {
+                document.title = "Sistem Rapor ABBS";
+            }
+        }
+
+        function generateStudentDOM(siswa, conf) {
+            const studentPages = []; 
+            let pageNum = 1;
+
+            const sakitVal = siswa['SAKIT'] || siswa['SAKIT '] || siswa['Sakit'] || siswa['sakit'] || '-';
+            const izinVal = siswa['IJIN'] || siswa['IJIN '] || siswa['Ijin'] || siswa['IZIN'] || '-';
+            const alphaVal = siswa['TANPA KETERANGAN'] || siswa['Tanpa Keterangan'] || siswa['ALPHA'] || siswa['Alpha'] || '-';
+
+            const namaSiswa = toTitleCase(siswa.Nama);
+
+            const headerHTML = `
+            <div class="header-container">
+                <table class="identitas">
+                    <colgroup>
+                        <col style="width:130px;">
+                        <col style="width:10px;">
+                        <col style="width:auto;">
+                        <col style="width:140px;">
+                        <col style="width:10px;">
+                        <col style="width:150px;">
+                    </colgroup>
+                    <tr>
+                        <td>Nama Peserta Didik</td><td>:</td>
+                        <td>${namaSiswa}</td>
+                        <td>Kelas</td><td>:</td>
+                        <td>${conf.kelas}</td>
+                    </tr>
+                    <tr>
+                        <td>NIS / NISN</td><td>:</td>
+                        <td>${siswa.NIS||'-'} / ${siswa.NISN||'-'}</td>
+                        <td>Fase</td><td>:</td>
+                        <td>${conf.fase}</td>
+                    </tr>
+                    <tr>
+                        <td>Nama Sekolah</td><td>:</td>
+                        <td>${conf.sekolah}</td>
+                        <td>Semester</td><td>:</td>
+                        <td>${conf.sem}</td>
+                    </tr>
+                    <tr>
+                        <td>Alamat Sekolah</td><td>:</td>
+                        <td style="font-size:10.5pt;">${conf.alamat}</td>
+                        <td>Tahun Pelajaran</td><td>:</td>
+                        <td>${conf.thn}</td>
+                    </tr>
+                </table>
+            </div>`;
+
+            const titleHTML = `<h1 class="judul-rapor">LAPORAN HASIL BELAJAR</h1>`;
+
+            const getFooter = () => `
+            <div class="footer">
+                <span>${conf.kelas} | ${namaSiswa} | ${siswa.NIS || siswa.NISN || '-'}</span>
+                <span>Halaman ${pageNum}</span>
+            </div>`;
+
+            const createSheet = (isFirstPage) => {
+                const d = document.createElement('div');
+                d.className = 'sheet';
+                
+                let content = headerHTML;
+                if (isFirstPage) content += titleHTML;
+
+                d.innerHTML = content + '<div class="content-body"></div>' + getFooter();
+                return d;
+            };
+
+            let curSheet = createSheet(true);
+            let curBody = curSheet.querySelector('.content-body');
+            pageNum++;
+            studentPages.push(curSheet);
+
+            const tempContainer = document.getElementById('hiddenContainer');
+            tempContainer.innerHTML = ''; 
+
+            function appendToSheet(html) {
+                if (!curSheet.isConnected) tempContainer.appendChild(curSheet);
+                const t = document.createElement('div');
+                t.innerHTML = html;
+                const el = t.firstElementChild;
+                curBody.appendChild(el);
+                
+                if(curBody.scrollHeight > curBody.clientHeight) {
+                    curBody.removeChild(el);
+                    curSheet = createSheet(false);
+                    curBody = curSheet.querySelector('.content-body');
+                    pageNum++;
+                    studentPages.push(curSheet);
+                    tempContainer.appendChild(curSheet);
+                    curBody.appendChild(el);
+                }
+            }
+            
+            function appendTable(head, rows, cls="data-table") {
+                if (!curSheet.isConnected) tempContainer.appendChild(curSheet);
+                let tbl = document.createElement('table');
+                tbl.className = cls;
+                tbl.innerHTML = `<thead>${head}</thead><tbody></tbody>`;
+                curBody.appendChild(tbl);
+                let tbody = tbl.querySelector('tbody');
+
+                if(curBody.scrollHeight > curBody.clientHeight) {
+                    curBody.removeChild(tbl);
+                    curSheet = createSheet(false);
+                    curBody = curSheet.querySelector('.content-body');
+                    pageNum++;
+                    studentPages.push(curSheet);
+                    tempContainer.appendChild(curSheet);
+                    tbl = document.createElement('table');
+                    tbl.className = cls;
+                    tbl.innerHTML = `<thead>${head}</thead><tbody></tbody>`;
+                    curBody.appendChild(tbl);
+                    tbody = tbl.querySelector('tbody');
+                }
+
+                rows.forEach(r => {
+                    const temp = document.createElement('tbody');
+                    temp.innerHTML = r;
+                    const tr = temp.firstElementChild;
+                    tbody.appendChild(tr);
+                    if(curBody.scrollHeight > curBody.clientHeight) {
+                        tbody.removeChild(tr);
+                        curSheet = createSheet(false);
+                        curBody = curSheet.querySelector('.content-body');
+                        pageNum++;
+                        studentPages.push(curSheet);
+                        tempContainer.appendChild(curSheet);
+                        tbl = document.createElement('table');
+                        tbl.className = cls;
+                        tbl.innerHTML = `<thead>${head}</thead><tbody></tbody>`;
+                        curBody.appendChild(tbl);
+                        tbody = tbl.querySelector('tbody');
+                        tbody.appendChild(tr);
+                    }
+                });
+            }
+
+            appendToSheet(`<h3>A. Intrakurikuler</h3>`);
+            appendTable(
+                `<tr><th width="5%">No</th><th width="35%">Mata Pelajaran</th><th width="10%">Nilai Akhir</th><th>Capaian Kompetensi</th></tr>`,
+                [
+                    row(1, "Pendidikan Agama Islam dan Budi Pekerti", siswa.PAI, siswa.des_PAI),
+                    row(2, "Pendidikan Pancasila", siswa.Pkn, siswa.des_Pkn),
+                    row(3, "Bahasa Indonesia", siswa.Indo, siswa.des_indo),
+                    row(4, "Matematika (Umum)", siswa.Math, siswa.des_Math),
+                    row(5, "Ilmu Pengetahuan Alam (IPA)", siswa.IPA, siswa.des_IPA),
+                    row(6, "Ilmu Pengetahuan Sosial (IPS)", siswa.IPS, siswa.des_IPS),
+                    row(7, "Bahasa Inggris", siswa.English, siswa.des_english),
+                    row(8, "Seni dan Budaya", siswa.NILAI_SBK, siswa.des_SBK),
+                    row(9, "Pendidikan Jasmani, Olahraga, dan Kesehatan", siswa.Sport, siswa.des_Sport),
+                    row(10, "Informatika", siswa.ICT, siswa.des_ICT),
+                    row(11, "Bahasa Jawa", siswa.jawa, siswa.des_jawa)
+                ]
+            );
+
+            appendToSheet(`<h3>B. Kokurikuler</h3>`);
+            appendTable(
+                `<tr><th>Deskripsi</th></tr>`,
+                [`<tr><td style="height:60px; text-align:justify;">${siswa['Deskripsi Kokurikuler']||"-"}</td></tr>`],
+                "koku-table"
+            );
+
+            appendToSheet(`<h3>C. Ekstrakurikuler</h3>`);
+            
+            // MODIFIKASI: Menambahkan class toggle-text dan onclick
+            appendTable(
+                `<tr><th width="5%">No</th><th width="40%">Kegiatan Ekstrakurikuler</th><th width="10%">Predikat</th><th>Keterangan</th></tr>`,
+                [
+                    `<tr>
+                        <td class="center">1</td>
+                        <td>
+                            <span class="toggle-text" onclick="toggleStrike(this)">Kepramukaan</span> / 
+                            <span class="toggle-text" onclick="toggleStrike(this)">PMR</span>
+                        </td>
+                        <td class="center bold">${siswa['Predikat']||'-'}</td>
+                        <td>${siswa['Deskripsi PRAMUKA / PMR']||'-'}</td>
+                    </tr>`,
+                    `<tr><td class="center">2</td><td>${siswa.NAMA_SD||'Self Development'}</td><td class="center bold">${siswa.predikat||'-'}</td><td>${siswa.des_SD||'-'}</td></tr>`
+                ]
+            );
+
+            appendToSheet(`<h3>D. Ketidakhadiran</h3>`);
+            appendToSheet(`
+                <table class="absensi-table">
+                    <tr><td style="width:50%;">Sakit</td><td>: ${sakitVal} hari</td></tr>
+                    <tr><td>Izin</td><td>: ${izinVal} hari</td></tr>
+                    <tr><td>Tanpa Keterangan</td><td>: ${alphaVal} hari</td></tr>
+                </table>
+            `);
+
+            appendToSheet(`<h3>E. Catatan Wali Kelas</h3>`);
+            appendToSheet(`<div class="catatan-box">${siswa['CATATAN WALAS']||'-'}</div>`);
+
+            appendToSheet(`
+                <div style="margin-top:20px;">
+                    <div class="signature-section">
+                        <div class="sign-box">
+                            <p>Mengetahui,<br>Orang Tua/Wali</p>
+                            <div class="space-sign"></div>
+                            <p>(................................)</p>
+                        </div>
+                        <div class="sign-box">
+                            <p>${conf.tgl}<br>Wali Kelas,</p>
+                            <div class="space-sign"></div>
+                            <p><u><strong>${conf.wali}</strong></u><br>NIP. ${conf.nip}</p>
+                        </div>
+                    </div>
+                    <div class="headmaster">
+                        <p>Mengetahui,<br>Kepala SMP ABBS Surakarta</p>
+                        <div class="space-sign"></div>
+                        <p><u><strong>${conf.kepsek}</strong></u><br>NIP. -</p>
+                    </div>
+                </div>
+            `);
+
+            tempContainer.innerHTML = '';
+            return studentPages;
+        }
+
+        function renderPreview() {
+            if(!globalWorkbook) { alert("Upload file dulu!"); return; }
+            const sheetName = document.getElementById('sheetSelect').value;
+            if(!sheetName) { alert("Pilih sheet dulu!"); return; }
+            
+            updateFileName();
+            
+            const worksheet = globalWorkbook.Sheets[sheetName];
+            const data = XLSX.utils.sheet_to_json(worksheet, {defval:''});
+            const out = document.getElementById('outputArea');
+            out.innerHTML = "";
+            
+            const conf = getConfig();
+
+            data.forEach(siswa => {
+                if(!siswa.Nama) return;
+                const pages = generateStudentDOM(siswa, conf);
+                pages.forEach(p => out.appendChild(p));
+            });
+            
+            if(window.innerWidth < 1000) toggleSidebar(); 
+        }
+
+        function cetakPDF() {
+            updateFileName();
+            window.print();
+        }
+
+        async function downloadZIP() {
+            if(!globalWorkbook) { alert("Upload file dulu!"); return; }
+            const sheetName = document.getElementById('sheetSelect').value;
+            if(!sheetName) { alert("Pilih sheet dulu!"); return; }
+
+            const worksheet = globalWorkbook.Sheets[sheetName];
+            const data = XLSX.utils.sheet_to_json(worksheet, {defval:''});
+            const conf = getConfig();
+
+            const btn = document.getElementById('btnZip');
+            const progCont = document.getElementById('zipProgressContainer');
+            const progBar = document.getElementById('zipProgressFill');
+            const progText = document.getElementById('zipStatusText');
+            
+            btn.disabled = true;
+            progCont.style.display = 'block';
+            
+            const zip = new JSZip();
+            const folder = zip.folder(`Rapor ${conf.kelas}`);
+            const validStudents = data.filter(s => s.Nama);
+            const total = validStudents.length;
+            const container = document.getElementById('hiddenContainer');
+
+            for (let i = 0; i < total; i++) {
+                const siswa = validStudents[i];
+                const percent = Math.round(((i + 1) / total) * 100);
+                progBar.style.width = percent + "%";
+                progText.innerText = `Memproses: ${toTitleCase(siswa.Nama)} (${i+1}/${total})`;
+
+                container.innerHTML = '';
+                const pages = generateStudentDOM(siswa, conf);
+                const wrapper = document.createElement('div');
+                pages.forEach(p => wrapper.appendChild(p));
+                container.appendChild(wrapper);
+
+                const opt = {
+                    margin: 0,
+                    filename: `${toTitleCase(siswa.Nama)}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                await html2pdf().set(opt).from(wrapper).outputPdf('blob').then(blob => {
+                    folder.file(`${toTitleCase(siswa.Nama)}.pdf`, blob);
+                });
+                await new Promise(r => setTimeout(r, 100));
+            }
+
+            progText.innerText = "Mengkompres file ZIP...";
+            zip.generateAsync({type:"blob"}).then(function(content) {
+                saveAs(content, `Rapor kelas ${conf.kelas}.zip`);
+                btn.disabled = false;
+                progText.innerText = "Selesai!";
+                setTimeout(() => { progCont.style.display = 'none'; }, 3000);
+                container.innerHTML = '';
+            });
+        }
+
+        function getConfig() {
+            return {
+                sekolah: document.getElementById('inpSekolah').value,
+                alamat: document.getElementById('inpAlamat').value,
+                kepsek: document.getElementById('inpKepsek').value,
+                fase: document.getElementById('inpFase').value,
+                sem: document.getElementById('inpSem').value,
+                thn: document.getElementById('inpThn').value,
+                tgl: document.getElementById('inpTgl').value,
+                wali: document.getElementById('inpWali').value,
+                nip: document.getElementById('inpNIP').value,
+                kelas: document.getElementById('inpKelas').value
+            };
+        }
+
+        function row(no, m, n, d) {
+            return `<tr><td class="center">${no}</td><td>${m}</td><td class="center bold">${n||''}</td><td style="text-align:justify;">${d||''}</td></tr>`;
+        }
+    </script>
+</body>
+</html>
