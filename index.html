@@ -3,588 +3,797 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Rapor SMP ABBS (V20 - Interactive Strike)</title>
+    <title>Sistem Rapor Terpadu (V58 - UI Polished)</title>
     
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* --- LAYOUT & RESET --- */
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #525659; display: flex; height: 100vh; overflow: hidden; }
-
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: 340px; background: #f8f9fa; border-right: 1px solid #ddd;
-            display: flex; flex-direction: column; padding: 20px; box-sizing: border-box;
-            overflow-y: auto; z-index: 100; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-            transition: margin-left 0.3s ease; padding-top: 50px;
-        }
-        .sidebar.closed { margin-left: -340px; }
-
-        #toggleSidebarBtn {
-            position: absolute; top: 10px; left: 10px; z-index: 200;
-            background: #343a40; color: white; border: none; padding: 8px 12px;
-            border-radius: 4px; cursor: pointer; font-size: 18px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-        #toggleSidebarBtn:hover { background: #23272b; }
-
-        .sidebar h2 { margin-top: 0; font-size: 18px; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
-        fieldset { border: 1px solid #ccc; border-radius: 5px; margin-bottom: 12px; padding: 10px; background: white; }
-        legend { font-size: 11px; font-weight: bold; color: #007bff; text-transform: uppercase; padding: 0 5px; }
-        .input-group { margin-bottom: 8px; display: flex; flex-direction: column; }
-        .input-group label { font-size: 11px; font-weight: bold; margin-bottom: 2px; color: #555; }
-        input[type="text"], select { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; width: 100%; box-sizing: border-box; }
+        /* --- GLOBAL & LAYOUT --- */
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #2c3e50; overflow: hidden; display: flex; height: 100vh; }
         
-        .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
-        button.action-btn { padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;}
-        .btn-blue { background: #007bff; color: white; } .btn-blue:hover { background: #0056b3; }
-        .btn-green { background: #28a745; color: white; } .btn-green:hover { background: #218838; }
-        .btn-orange { background: #fd7e14; color: white; } .btn-orange:hover { background: #e36a09; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
+        /* LANDING PAGE */
+        #landing-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1e3a8a 0%, #d97706 100%); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
+        .landing-card { background: rgba(255, 255, 255, 0.15); padding: 50px; border-radius: 20px; backdrop-filter: blur(10px); box-shadow: 0 15px 35px rgba(0,0,0,0.4); text-align: center; }
+        .landing-btn { display: block; width: 320px; padding: 18px; margin: 20px auto; font-size: 18px; font-weight: bold; border: none; border-radius: 50px; cursor: pointer; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .btn-dinas { background: #fff; color: #1e3a8a; } .btn-ila { background: #d97706; color: #fff; }
+        .landing-btn:hover { transform: translateY(-3px); }
 
-        #zipProgressContainer { margin-top: 10px; display: none; }
-        #zipProgressBar { width: 100%; height: 10px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden; }
-        #zipProgressFill { height: 100%; width: 0%; background-color: #28a745; transition: width 0.3s; }
-        #zipStatusText { font-size: 11px; text-align: center; margin-top: 3px; color: #333; }
+        /* APP LAYOUT */
+        .app-container { display: none; height: 100vh; width: 100%; } 
+        
+        /* SIDEBAR */
+        .sidebar { width: 320px; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; z-index: 100; transition: margin-left 0.3s ease; flex-shrink: 0; }
+        .sidebar.closed { margin-left: -320px; }
+        
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        .home-btn { background: #64748b; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 
-        /* --- MAIN CONTENT --- */
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; transition: padding-left 0.3s; }
+        /* INPUTS */
+        fieldset { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; padding: 10px; background: #f8fafc; }
+        legend { font-size: 10px; font-weight: bold; text-transform: uppercase; padding: 0 5px; }
+        .leg-dinas { color: #1e3a8a; } .leg-ila { color: #d97706; }
+        .input-group { margin-bottom: 8px; display: flex; flex-direction: column; }
+        .input-group label { font-size: 11px; font-weight: 600; margin-bottom: 2px; color: #475569; }
+        input[type="text"], select { padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; width: 100%; box-sizing: border-box; }
+        
+        /* ACTION BUTTONS */
+        button.action-btn { width: 100%; padding: 12px; margin-top: 8px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: 0.2s; }
+        button.action-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        button.action-btn:disabled { background: #ccc !important; cursor: not-allowed; transform: none; }
+        .bg-blue { background: #1e3a8a; } .bg-green { background: #10b981; } .bg-orange { background: #f59e0b; }
+        
+        /* PROGRESS BAR (Dipindah ke atas) */
+        .progress-container { margin-bottom: 15px; display: none; background: #f1f5f9; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .progress-bar { width: 100%; height: 10px; background: #cbd5e1; border-radius: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: #2563eb; transition: width 0.3s ease-out; background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent); background-size: 1rem 1rem; animation: progress-stripes 1s linear infinite; }
+        .progress-text { font-size: 11px; text-align: center; margin-top: 5px; color: #334155; font-weight: 600; }
 
-        /* --- KERTAS A4 --- */
+        @keyframes progress-stripes { from { background-position: 1rem 0; } to { background-position: 0 0; } }
+
+        /* MAIN CONTENT */
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #525659; position: relative; }
+        .main-content { 
+            flex: 1; overflow-y: auto; padding: 40px; 
+            display: flex; flex-direction: column; align-items: center; 
+            scroll-behavior: smooth; padding-bottom: 80px; 
+        }
+
+        /* TOOLBAR */
+        .preview-toolbar {
+            height: 60px; background: #34495e; color: white; 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.3); 
+            z-index: 50; flex-shrink: 0;
+        }
+        .toolbar-left { display: flex; align-items: center; gap: 15px; }
+        .toggle-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+        
+        .view-controls { display: flex; background: #2c3e50; border-radius: 5px; padding: 3px; }
+        .view-btn { background: none; border: none; color: #95a5a6; padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: bold; border-radius: 4px; transition: 0.2s; }
+        .view-btn.active { background: #1e3a8a; color: white; }
+        .view-btn:hover { color: white; }
+
+        .nav-controls { display: flex; align-items: center; gap: 10px; display: none; }
+        #studentSelector { padding: 6px; border-radius: 4px; font-size: 12px; max-width: 250px; background: #fff; color: #333; border: none;}
+        .nav-btn { background: #1e3a8a; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        
+        /* --- SHEET STYLE (A4) --- */
         .sheet {
             background: white; width: 210mm; height: 297mm;
-            padding: 10mm 10mm 25mm 10mm; margin-bottom: 30px; box-sizing: border-box;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            margin-bottom: 40px; box-sizing: border-box;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
             display: flex; flex-direction: column; position: relative; overflow: hidden; flex-shrink: 0;
         }
-        .sheet * { font-family: 'Times New Roman', Times, serif; }
         .content-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-        .header-container { margin-bottom: 10px; border-bottom: 3px double black; padding-bottom: 5px; }
-        h1.judul-rapor { font-size: 14pt; margin: 10px 0 5px 0; text-align: center; font-weight: bold; text-transform: uppercase; }
+        /* === RAPOR DINAS STYLE === */
+        .sheet-dinas { padding: 10mm 10mm 20mm 10mm; font-family: 'Times New Roman', Times, serif; color: black; }
+        .dinas-header table { width: 100%; border-collapse: collapse; font-size: 11pt; table-layout: fixed; }
+        .dinas-header td { padding: 2px 0; vertical-align: top; border: none; word-wrap: break-word; }
+        .header-separator { border-bottom: 2px solid black; margin-bottom: 15px; margin-top: 5px; }
+        .dinas-title { font-size: 14pt; margin: 10px 0 5px 0; text-align: center; font-weight: bold; text-transform: uppercase; }
+        .dinas-sub { font-size: 12pt; margin: 15px 0 5px 0; font-weight: bold; display: inline-block; }
         
-        table.identitas { width: 100%; border-collapse: collapse; font-size: 11pt; table-layout: fixed; }
-        table.identitas td { padding: 2px 0; vertical-align: top; border: none; }
-
-        .sheet h3 { font-size: 12pt; margin: 15px 0 5px 0; font-weight: bold; }
+        .dinas-table { width: 100%; border-collapse: collapse; font-size: 11pt; margin-bottom: 5px; }
+        .dinas-table th, .dinas-table td { border: 1px solid black; padding: 4px 6px; vertical-align: middle; }
+        .dinas-table th { background: #f2f2f2; font-weight: bold; text-align: center; }
+        .cell-center { text-align: center !important; } .cell-left { text-align: left !important; } .cell-justify { text-align: justify !important; }
         
-        table.data-table, table.koku-table, table.absensi-table { width: 100%; border-collapse: collapse; font-size: 11pt; margin-bottom: 5px; }
-        table.data-table th, table.data-table td { border: 1px solid black; padding: 4px 6px; vertical-align: top; }
-        table.data-table th, table.koku-table th { background: #f2f2f2; font-weight: bold; text-align: center; vertical-align: middle; }
-        
-        table.koku-table th { border: 1px solid black; padding: 5px; }
-        table.koku-table td { border: 1px solid black; padding: 10px; vertical-align: top; text-align: justify; min-height: 60px; }
-        table.absensi-table td { border: 1px solid black; padding: 4px 6px; }
-
+        .dinas-footer { 
+            position: absolute; bottom: 10mm; left: 10mm; right: 10mm; height: 10mm; 
+            border-top: 2px solid black; padding-top: 5px; font-size: 10pt; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
         .catatan-box { width: 100%; border: 1px solid black; padding: 10px; min-height: 80px; box-sizing: border-box; font-size: 11pt; margin-bottom: 10px; }
         
-        .footer { position: absolute; bottom: 10mm; left: 10mm; right: 10mm; height: 15mm; border-top: 1px solid black; padding-top: 5px; font-size: 10pt; display: flex; justify-content: space-between; align-items: center; }
+        .signature-container { margin-top: 20px; }
+        .signature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .sig-box { text-align: center; }
+        .sig-box-center { grid-column: 1 / -1; text-align: center; margin-top: 30px; }
+        .space-sign { height: 70px; }
 
-        .center { text-align: center; } .bold { font-weight: bold; }
-        .signature-section { margin-top: 20px; display: flex; justify-content: space-between; }
-        .sign-box { width: 35%; text-align: center; }
-        .headmaster { text-align: center; margin-top: 30px; }
-        .space-sign { height: 75px; }
+        /* === RAPOR ILA STYLE === */
+        .sheet-ila { padding: 40px 50px; font-family: 'Inter', sans-serif; color: #000; }
+        .ila-h1 { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 20px; text-transform: uppercase; letter-spacing: 0.5px; color: #1e3a8a; margin: 0 0 5px 0; text-align: center; }
+        .ila-dim-title { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 16px; color: #d97706; margin-top: 15px; margin-bottom: 5px; border-bottom: 2px solid #d97706; display: inline-block; padding-bottom: 2px; text-transform: uppercase; }
+        .ila-val-title { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; color: #1f2937; margin-top: 10px; margin-bottom: 5px; padding-left: 5px; }
 
-        /* --- CSS KHUSUS TOGGLE STRIKE --- */
-        .toggle-text {
-            cursor: pointer;
-            padding: 0 2px;
-            transition: color 0.2s;
-        }
-        .toggle-text:hover {
-            background-color: #ffff99; /* Highlight saat hover */
-        }
-        .is-crossed {
-            text-decoration: line-through;
-            color: #555;
-        }
+        .ila-info-container { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .ila-info-col { width: 48%; }
+        .ila-info-table { width: 100%; font-size: 13px; font-weight: 500; border-collapse: collapse; }
+        .ila-info-table td { padding: 2px 0; vertical-align: top; }
+        .ila-info-table .val { font-weight: 700; color: #000; }
 
-        @media print {
-            body { display: block; background: white; height: auto; overflow: visible; }
-            .sidebar, #toggleSidebarBtn { display: none; }
-            .main-content { padding: 0; display: block; overflow: visible; }
-            .sheet { margin: 0; box-shadow: none; page-break-after: always; width: 100%; height: 297mm; }
-            @page { size: A4; margin: 0; }
-            
-            /* Pastikan coretan tercetak */
-            .is-crossed { text-decoration: line-through !important; }
+        .scoring-card { margin-bottom: 15px; }
+        .scoring-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #1e3a8a; margin-bottom: 5px; border-bottom: 1px solid #ccc; padding-bottom: 2px; text-align: center; }
+        .scoring-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+        .score-box { border: 1px solid #ccc; border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
+        .sb-head { background: #1e3a8a; color: white; text-align: center; font-weight: bold; padding: 3px; font-size: 13px; }
+        .sb-body { padding: 5px; text-align: center; font-size: 9px; line-height: 1.2; flex: 1; display: flex; flex-direction: column; justify-content: center; background: #fff; }
+        .sb-label { font-weight: 800; color: #d97706; margin-bottom: 2px; display: block; font-size: 9px; }
+
+        .ila-table-container { margin-bottom: 10px; }
+        .ila-table { width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #000; }
+        .ila-table th { background-color: #1e3a8a; color: white; padding: 6px; text-align: center; font-weight: 600; text-transform: uppercase; font-size: 10px; border: 1px solid #000; vertical-align: middle; }
+        .ila-table td { border: 1px solid #000; padding: 5px 8px; vertical-align: middle; }
+        .ila-table .col-score { width: 35px; text-align: center; font-weight: bold; font-size: 12px; vertical-align: middle; }
+        .ila-table tr.row-category td { background-color: #f3f4f6; font-weight: 700; color: #1e3a8a; text-transform: uppercase; font-size: 10px; padding: 5px 10px; border: 1px solid #000; }
+        .indicator-text { text-align: justify; line-height: 1.3; }
+
+        .ila-sig-section { margin-top: 20px; display: flex; justify-content: flex-end; font-size: 12px; font-weight: 500; }
+        .ila-sig-box { text-align: center; width: 220px; }
+        
+        .toggle-text { cursor: pointer; } .is-crossed { text-decoration: line-through; color: #555; }
+
+        /* Hidden Processing Container */
+        #hidden-processing {
+            position: fixed; left: -9999px; top: 0;
+            width: 210mm;
         }
     </style>
 </head>
 <body>
 
-    <button id="toggleSidebarBtn" onclick="toggleSidebar()" title="Sembunyikan/Tampilkan Sidebar">☰</button>
-
-    <div class="sidebar" id="sidebarPanel">
-        <h2>🛠️ Generator Rapor</h2>
-        
-        <fieldset>
-            <legend>📂 File & Kelas</legend>
-            <div class="input-group">
-                <label style="color:#d9534f;">1. Upload File Excel</label>
-                <input type="file" id="fileInput" accept=".xlsx, .xls">
-            </div>
-            <div class="input-group">
-                <label style="color:#007bff;">2. Pilih Sheet (Auto Kelas)</label>
-                <select id="sheetSelect" disabled onchange="autoFillClass()">
-                    <option value="">-- Upload Dulu --</option>
-                </select>
-            </div>
-        </fieldset>
-
-        <fieldset>
-            <legend>🏫 Info Sekolah</legend>
-            <div class="input-group"><label>Nama Sekolah</label><input type="text" id="inpSekolah" value="SMP ABBS Surakarta"></div>
-            <div class="input-group"><label>Alamat</label><input type="text" id="inpAlamat" value="Jl. Tarumanegara III, Banyuanyar, Banjarsari, Surakarta"></div>
-            <div class="input-group"><label>Kepala Sekolah</label><input type="text" id="inpKepsek" value="Tri Wijayanti, M.Pd"></div>
-        </fieldset>
-
-        <fieldset>
-            <legend>📅 Data Akademik</legend>
-            <div class="input-group"><label>Kelas (Otomatis)</label><input type="text" id="inpKelas" placeholder="Pilih Sheet dulu..."></div>
-            <div class="input-group"><label>Fase</label><input type="text" id="inpFase" value="D"></div>
-            <div class="input-group"><label>Semester</label><select id="inpSem"><option value="1 (Ganjil)" selected>1 (Ganjil)</option><option value="2 (Genap)">2 (Genap)</option></select></div>
-            <div class="input-group">
-                <label>Tahun Pelajaran</label>
-                <select id="inpThn">
-                    <option value="2025/2026" selected>2025/2026</option>
-                    <option value="2026/2027">2026/2027</option>
-                    <option value="2027/2028">2027/2028</option>
-                    <option value="2028/2029">2028/2029</option>
-                    <option value="2029/2030">2029/2030</option>
-                    <option value="2030/2031">2030/2031</option>
-                </select>
-            </div>
-            <div class="input-group"><label>Tanggal Rapor</label><input type="text" id="inpTgl" value="Surakarta, 20 Desember 2025"></div>
-        </fieldset>
-
-        <fieldset>
-            <legend>✍️ Wali Kelas</legend>
-            <div class="input-group"><label>Nama Wali Kelas</label><input type="text" id="inpWali" value="Febriyono S. Pd, M.Bg"></div>
-            <div class="input-group"><label>NIP Wali Kelas</label><input type="text" id="inpNIP" value="-"></div>
-        </fieldset>
-
-        <div class="btn-group">
-            <button class="action-btn btn-blue" onclick="renderPreview()">👁️ Tampilkan Preview</button>
-            <button class="action-btn btn-green" onclick="cetakPDF()">🖨️ Cetak Semua PDF</button>
-            <button class="action-btn btn-orange" id="btnZip" onclick="downloadZIP()">📦 Download ZIP</button>
-        </div>
-
-        <div id="zipProgressContainer">
-            <div id="zipProgressBar"><div id="zipProgressFill"></div></div>
-            <div id="zipStatusText">Memproses: 0%</div>
-        </div>
-        
-        <div style="margin-top:15px; font-size:11px; color:#666; text-align:center;">
-            <i>*Tip: Klik teks "Kepramukaan" atau "PMR" di preview untuk mencoret.</i>
+    <div id="landing-page">
+        <div class="landing-card">
+            <h1 style="margin-bottom: 10px;">SISTEM RAPOR TERPADU</h1>
+            <h3 style="margin-bottom: 40px; opacity: 0.9; font-weight: normal;">SMP ABBS SURAKARTA</h3>
+            <button class="landing-btn btn-dinas" onclick="switchApp('dinas')">📘 RAPOR DINAS</button>
+            <button class="landing-btn btn-ila" onclick="switchApp('ila')">📙 RAPOR ILA (Leadership)</button>
         </div>
     </div>
 
-    <div class="main-content" id="outputArea">
-        <div style="color:white; margin-top:50px; text-align:center;">
-            <h3>Selamat Datang</h3>
-            <p>Upload file, pilih kelas di sidebar, lalu klik tombol Preview.</p>
+    <div id="app-dinas" class="app-container">
+        <div class="sidebar" id="sidebar-dinas">
+            <div class="sidebar-header">
+                <h3 style="margin:0; color:#1e3a8a;">Rapor Dinas</h3>
+                <button class="home-btn" onclick="goHome()">🏠 Menu</button>
+            </div>
+            
+            <fieldset>
+                <legend class="leg-dinas">📂 File Leger</legend>
+                <input type="file" id="fileDinas" accept=".xlsx, .xls">
+                <select id="sheetDinas" disabled onchange="autoFillClass('dinas')"><option value="">-- Upload Dulu --</option></select>
+            </fieldset>
+
+            <fieldset>
+                <legend class="leg-dinas">🏫 Sekolah & Info</legend>
+                <div class="input-group"><label>Sekolah</label><input type="text" id="dinasSekolah" oninput="saveData('dinas')" value="SMP ABBS Surakarta"></div>
+                <div class="input-group"><label>Alamat</label><input type="text" id="dinasAlamat" oninput="saveData('dinas')" value="Jl. Tarumanegara III, Banyuanyar, Banjarsari, Surakarta"></div>
+                <div class="input-group"><label>Kepala Sekolah</label><input type="text" id="dinasKepsek" oninput="saveData('dinas')" value="Tri Wijayanti, M.Pd"></div>
+                <div class="input-group"><label>Kelas</label><input type="text" id="dinasKelas"></div>
+                <div class="input-group"><label>Fase</label><input type="text" id="dinasFase" oninput="saveData('dinas')" value="D"></div>
+                <div class="input-group"><label>Semester</label><select id="dinasSem" onchange="saveData('dinas')"><option value="1 (Ganjil)">1 (Ganjil)</option><option value="2 (Genap)">2 (Genap)</option></select></div>
+                <div class="input-group"><label>Tahun Ajaran</label><select id="dinasThn" onchange="saveData('dinas')"><option>2025/2026</option><option>2026/2027</option></select></div>
+                <div class="input-group"><label>Tgl Rapor</label><input type="text" id="dinasTgl" oninput="saveData('dinas')" value="Surakarta, 20 Desember 2025"></div>
+            </fieldset>
+
+            <fieldset>
+                <legend class="leg-dinas">✍️ Wali Kelas</legend>
+                <div class="input-group"><label>Nama</label><input type="text" id="dinasWali" oninput="saveData('dinas')" value="Febriyono S. Pd, M.Bg"></div>
+                <div class="input-group"><label>NIP</label><input type="text" id="dinasNIP" oninput="saveData('dinas')" value="-"></div>
+            </fieldset>
+
+            <div id="progDinas" class="progress-container">
+                <div class="progress-bar"><div class="progress-fill" id="fillDinas"></div></div>
+                <div class="progress-text" id="txtDinas">Processing...</div>
+            </div>
+
+            <button class="action-btn bg-blue" onclick="processPreview('dinas')">👁️ Tampilkan Preview</button>
+            <button class="action-btn bg-green" onclick="generateBatchPDF('dinas')">📄 Download 1 Kelas (PDF)</button>
+            <button class="action-btn bg-orange" onclick="generateBatchZIP('dinas')">📦 Download Per Siswa (ZIP)</button>
+        </div>
+
+        <div class="main-wrapper">
+            <div class="preview-toolbar">
+                <div class="toolbar-left"><button class="toggle-btn" onclick="toggleSidebar('dinas')">☰</button><span style="font-weight:bold; font-size:14px; margin-left:10px;">Preview: Dinas</span></div>
+                <div class="view-controls"><button id="btnViewAllDinas" class="view-btn active" onclick="setViewMode('all', 'dinas')">📜 Semua</button><button id="btnViewSingleDinas" class="view-btn" onclick="setViewMode('single', 'dinas')">👤 Per Siswa</button></div>
+                <div class="nav-controls" id="navControlsDinas"><button class="nav-btn" onclick="changeStudent(-1, 'dinas')">◀</button><select id="studentSelectorDinas" onchange="jumpToStudent('dinas')"></select><button class="nav-btn" onclick="changeStudent(1, 'dinas')">▶</button></div>
+            </div>
+            <div class="main-content" id="outputDinas"><div style="color:white; margin-top:50px;"><h3>Silakan Upload Leger Dinas</h3></div></div>
         </div>
     </div>
 
-    <div id="hiddenContainer" style="position:fixed; left:-9999px; top:0;"></div>
+    <div id="app-ila" class="app-container">
+        <div class="sidebar" id="sidebar-ila">
+            <div class="sidebar-header">
+                <h3 style="margin:0; color:#d97706;">Rapor ILA</h3>
+                <button class="home-btn" onclick="goHome()">🏠 Menu</button>
+            </div>
+
+            <fieldset>
+                <legend class="leg-ila">📂 File Leger</legend>
+                <input type="file" id="fileILA" accept=".xlsx, .xls">
+                <select id="sheetILA" disabled onchange="autoFillClass('ila')"><option value="">-- Upload Dulu --</option></select>
+            </fieldset>
+
+            <fieldset>
+                <legend class="leg-ila">👤 Data Siswa</legend>
+                <div class="input-group"><label>Kelas</label><input type="text" id="ilaKelas"></div>
+            </fieldset>
+
+            <fieldset>
+                <legend class="leg-ila">⚙️ Info Rapor</legend>
+                <div class="input-group"><label>Nama Sekolah</label><input type="text" id="ilaSekolah" oninput="saveData('ila')" value="SMP ABBS Surakarta"></div>
+                <div class="input-group"><label>Tanggal Rapor</label><input type="text" id="ilaTgl" oninput="saveData('ila')" value="Surakarta, 20 December 2025"></div>
+                <div class="input-group"><label>Wali Kelas</label><input type="text" id="ilaWali" oninput="saveData('ila')" value="Febriyono S. Pd, M.Bg"></div>
+            </fieldset>
+
+            <div id="progILA" class="progress-container">
+                <div class="progress-bar"><div class="progress-fill" id="fillILA"></div></div>
+                <div class="progress-text" id="txtILA">Processing...</div>
+            </div>
+
+            <button class="action-btn bg-blue" onclick="processPreview('ila')">👁️ Tampilkan Preview</button>
+            <button class="action-btn bg-green" onclick="generateBatchPDF('ila')">📄 Download 1 Kelas (PDF)</button>
+            <button class="action-btn bg-orange" onclick="generateBatchZIP('ila')">📦 Download Per Siswa (ZIP)</button>
+        </div>
+
+        <div class="main-wrapper">
+            <div class="preview-toolbar">
+                <div class="toolbar-left"><button class="toggle-btn" onclick="toggleSidebar('ila')">☰</button><span style="font-weight:bold; font-size:14px; margin-left:10px;">Preview: ILA</span></div>
+                <div class="view-controls"><button id="btnViewAllILA" class="view-btn active" onclick="setViewMode('all', 'ila')">📜 Semua</button><button id="btnViewSingleILA" class="view-btn" onclick="setViewMode('single', 'ila')">👤 Per Siswa</button></div>
+                <div class="nav-controls" id="navControlsILA"><button class="nav-btn" onclick="changeStudent(-1, 'ila')">◀</button><select id="studentSelectorILA" onchange="jumpToStudent('ila')"></select><button class="nav-btn" onclick="changeStudent(1, 'ila')">▶</button></div>
+            </div>
+            <div class="main-content" id="outputILA"><div style="color:white; margin-top:50px;"><h3>Silakan Upload Leger ILA</h3></div></div>
+        </div>
+    </div>
+
+    <div id="hidden-processing"></div>
 
     <script>
-        let globalWorkbook = null;
+        // DATA ILA (Structure remains same)
+        const ilaStructure = [
+            { dim: "1. Self Discipline", vals: [ { name: "1.1. Independence", cats: [ { code: "1.1.1", title: "Independence in Self-Care", inds: [{c:"1.1.1.1",t:"Students demonstrate initiative in waking up early, grooming themselves, and regularly cleaning their nails and hair independently."},{c:"1.1.1.2",t:"Students can independently perform a major bath/ablution (for boys) and clean/dispose of sanitary pads properly (for girls)."},{c:"1.1.1.3",t:"Students show initiative in maintaining their own health by exercising routinely and managing their dietary intake."}] }, { code: "1.1.2", title: "Independence in Learning", inds: [{c:"1.1.2.1",t:"Independently preparing and bringing appropriate school supplies."},{c:"1.1.2.2",t:"Entering class on time and completing all assignments given by the teacher."},{c:"1.1.2.3",t:"Studying at home to prepare specifically for upcoming material and completing homework for the following day."}] }, { code: "1.1.3", title: "Social and Emotional Independence", inds: [{c:"1.1.3.1",t:"Students can form friendships with people from diverse backgrounds without discriminating."},{c:"1.1.3.2",t:"Students are able to manage their emotions during social interactions and understand the circumstances of others."},{c:"1.1.3.3",t:"Students can resolve conflicts with peers and express their wishes/needs appropriately to their friends."},{c:"1.1.3.4",t:"Students can collaborate with anyone and do not avoid or exclude specific peers."}] }, { code: "1.1.4", title: "Independence in Decision Making and Problem Solving", inds: [{c:"1.1.4.1",t:"Students can make decisions regarding the selection of extracurricular activities or organizations they want to join."},{c:"1.1.4.2",t:"Students can make decisions in determining their priority scale."},{c:"1.1.4.3",t:"Students are able to find solutions to problems faced in the school environment (e.g. conflicting schedules)."}] } ] }, { name: "1.2. Confidence", cats: [ { code: "1.1.5", title: "Confidence", inds: [{c:"1.1.5.1",t:"Dare to express opinions in public."},{c:"1.1.5.2",t:"Dare to ask questions or answer questions from the teacher."},{c:"1.1.5.3",t:"Dare to perform in front of the class or in public."}] } ] }, { name: "1.3. Resilience", cats: [ { code: "1.1.6", title: "Resilience and Work Ethic", inds: [{c:"1.1.6.1",t:"Not giving up easily when facing difficulties in learning or other activities."},{c:"1.1.6.2",t:"Trying hard to achieve the best results."}] } ] }, { name: "1.4. Social Awareness", cats: [ { code: "1.2.1", title: "Social Awareness", inds: [{c:"1.2.1.1",t:"Students show empathy towards friends who are in trouble or need help."},{c:"1.2.1.2",t:"Students appreciate the opinions and views of others."},{c:"1.2.1.3",t:"Students maintain the cleanliness of the shared environment and take care of shared property/assets."}] }, { code: "1.2.2", title: "Communication Skill", inds: [{c:"1.2.2.1",t:"Students use polite and courteous language when communicating with teachers and friends."},{c:"1.2.2.2",t:"Students listen well when others are speaking."},{c:"1.2.2.3",t:"Students express opinions clearly and easy to understand."}] } ] }, { name: "1.5. Adaptability", cats: [ { code: "1.3.1", title: "Adaptability", inds: [{c:"1.3.1.1",t:"Students can adapt to new environments and new friends."},{c:"1.3.1.2",t:"Students can accept changes in schedules or plans well."}] } ] }, { name: "1.6. Self-Management", cats: [ { code: "1.3.2", title: "Self-Management", inds: [{c:"1.3.2.1",t:"Students can manage time effectively between studying, playing, and resting."},{c:"1.3.2.2",t:"Students can control emotions when angry or disappointed."}] } ] }, { name: "1.7. Academic Integrity", cats: [ { code: "1.3.3", title: "Academic Integrity", inds: [{c:"1.3.3.1",t:"Students do exams honestly and do not cheat."},{c:"1.3.3.2",t:"Students complete assignments with their own efforts."},{c:"1.3.3.3",t:"Students admit mistakes and apologize."}] } ] }, { name: "1.8. Responsible Decision Making", cats: [ { code: "1.3.4", title: "Responsible Decision Making", inds: [{c:"1.3.4.1",t:"Students consider the consequences before doing something."},{c:"1.3.4.2",t:"Students are responsible for the decisions they have made."}] } ] }, { name: "1.9. Respect for Diversity", cats: [ { code: "1.4.1", title: "Respect for Diversity", inds: [{c:"1.4.1.1",t:"Students respect friends of different religions, races, and ethnicities."},{c:"1.4.1.2",t:"Students do not discriminate against friends based on physical or social background."}] } ] } ] },
+            { dim: "2. Social Concern", vals: [ { name: "2.1. Tolerance", cats: [ { code: "2.3.1", title: "Tolerance", inds: [{c:"2.3.1.1",t:"Students are willing to be friends with everyone, recognizing and understanding physical differences, hobbies, and cultures of other friends."},{c:"2.3.1.2",t:"Avoid and strictly do not commit bullying by not mocking, oppressing, or making friends feel intimidated."}] }, { code: "2.3.2", title: "Value other people's feelings", inds: [{c:"2.3.2.1",t:"Students give attention to their friends, listen to advice, and behave well towards others."}] } ] }, { name: "2.2. Empathy", cats: [ { code: "2.4.1", title: "Students show caring behavior", inds: [{c:"2.4.1.1",t:"Students remain silent and listen to other friends who are presenting or speaking."},{c:"2.4.1.2",t:"Students offer help when someone is in trouble."},{c:"2.4.1.3",t:"Lending stationery to friends who did not bring theirs."},{c:"2.4.1.4",t:"Sharing food or drink with friends in need."}] }, { code: "2.4.2", title: "Concern and share", inds: [{c:"2.4.2.1",t:"Students visit sick friends and bring gifts."},{c:"2.4.2.2",t:"Expressing condolences and paying respects (Takziah) when a friend's family member or neighbor passes away."}] }, { code: "2.4.3", title: "Listening and providing support", inds: [{c:"2.4.3.1",t:"Encourage friends who are sad because of bad grades or failure, for example by inviting them to study together."},{c:"2.4.3.2",t:"Comforting friends who are grieving or sad."}] } ] } ] }
+        ];
 
-        // FUNGSI GLOBAL UNTUK TOGGLE STRIKE
-        function toggleStrike(element) {
-            element.classList.toggle('is-crossed');
+        let wbDinas = null, wbILA = null;
+        let globalDataDinas = [], globalDataILA = [];
+        let viewMode = { dinas: 'all', ila: 'all' };
+        let studentIndex = { dinas: 0, ila: 0 };
+
+        function switchApp(app) {
+            document.getElementById('landing-page').style.display = 'none';
+            document.getElementById('app-dinas').style.display = app === 'dinas' ? 'flex' : 'none';
+            document.getElementById('app-ila').style.display = app === 'ila' ? 'flex' : 'none';
         }
-
-        function toTitleCase(str) {
-            if (!str) return "";
-            return str.toLowerCase().split(' ').map(function(word) {
-                return (word.charAt(0).toUpperCase() + word.slice(1));
-            }).join(' ');
+        function goHome() {
+            document.getElementById('landing-page').style.display = 'flex';
+            document.getElementById('app-dinas').style.display = 'none';
+            document.getElementById('app-ila').style.display = 'none';
         }
+        function toggleSidebar(app) { document.getElementById('sidebar-' + app).classList.toggle('closed'); }
 
-        function toggleSidebar() {
-            const sb = document.getElementById('sidebarPanel');
-            sb.classList.toggle('closed');
-        }
+        document.getElementById('fileDinas').addEventListener('change', (e) => handleUpload(e, 'dinas'));
+        document.getElementById('fileILA').addEventListener('change', (e) => handleUpload(e, 'ila'));
 
-        document.getElementById('fileInput').addEventListener('change', function(e) {
+        function handleUpload(e, type) {
             const file = e.target.files[0];
-            if (!file) return;
+            if(!file) return;
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                globalWorkbook = XLSX.read(data, {type: 'array'});
-                
-                const sheetSelect = document.getElementById('sheetSelect');
-                sheetSelect.innerHTML = "";
-                
-                globalWorkbook.SheetNames.forEach(sheetName => {
-                    const option = document.createElement('option');
-                    option.value = sheetName;
-                    option.textContent = sheetName;
-                    sheetSelect.appendChild(option);
-                });
-                
-                sheetSelect.disabled = false;
-                autoFillClass(); 
-                alert("File dimuat! Silakan cek kolom Kelas.");
+            // ANIMASI UPLOAD: Tampilkan SweetAlert Loading
+            let timerInterval;
+            Swal.fire({
+                title: 'Sedang Membaca File...',
+                html: 'Mohon tunggu, memproses data.',
+                timer: 1000, // Minimal 1 detik agar animasi terlihat
+                timerProgressBar: true,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            }).then((result) => {
+                // Proses baca file dilakukan setelah UI loading tampil
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    try {
+                        const data = new Uint8Array(evt.target.result);
+                        const wb = XLSX.read(data, {type:'array'});
+                        if(type === 'dinas') wbDinas = wb; else wbILA = wb;
+                        
+                        const sel = document.getElementById(type === 'dinas' ? 'sheetDinas' : 'sheetILA');
+                        sel.innerHTML = "";
+                        wb.SheetNames.forEach(n => {
+                            const opt = document.createElement('option');
+                            opt.value = n; opt.textContent = n;
+                            sel.appendChild(opt);
+                        });
+                        sel.disabled = false;
+                        autoFillClass(type);
+
+                        // NOTIFIKASI SUKSES (SweetAlert)
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: 'File leger berhasil dimuat.',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+
+                    } catch (err) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Membaca',
+                            text: 'Format file mungkin salah atau rusak.'
+                        });
+                        console.error(err);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function autoFillClass(type) {
+            const sel = document.getElementById(type==='dinas'?'sheetDinas':'sheetILA').value;
+            const inp = document.getElementById(type==='dinas'?'dinasKelas':'ilaKelas');
+            const match = sel.match(/([789][A-Z])/i);
+            inp.value = match ? match[0].toUpperCase() : sel;
+        }
+
+        function saveData(type) {
+            const data = {
+                dinas: {
+                    sekolah: document.getElementById('dinasSekolah').value,
+                    alamat: document.getElementById('dinasAlamat').value,
+                    kepsek: document.getElementById('dinasKepsek').value,
+                    fase: document.getElementById('dinasFase').value,
+                    sem: document.getElementById('dinasSem').value,
+                    thn: document.getElementById('dinasThn').value,
+                    tgl: document.getElementById('dinasTgl').value,
+                    wali: document.getElementById('dinasWali').value,
+                    nip: document.getElementById('dinasNIP').value
+                },
+                ila: {
+                    sekolah: document.getElementById('ilaSekolah').value,
+                    tgl: document.getElementById('ilaTgl').value,
+                    wali: document.getElementById('ilaWali').value
+                }
             };
-            reader.readAsArrayBuffer(file);
-        });
-
-        function autoFillClass() {
-            const sheetName = document.getElementById('sheetSelect').value;
-            if(!sheetName) return;
-            const match = sheetName.match(/([789][A-Z])/i);
-            const inpKelas = document.getElementById('inpKelas');
-            if (match) {
-                inpKelas.value = match[0].toUpperCase();
-            } else {
-                inpKelas.value = sheetName;
-            }
-            updateFileName();
+            localStorage.setItem('rapor_abbs_v58', JSON.stringify(data));
         }
 
-        function updateFileName() {
-            const cls = document.getElementById('inpKelas').value;
-            if (cls) {
-                document.title = "Rapor dina kelas " + cls;
-            } else {
-                document.title = "Sistem Rapor ABBS";
+        window.onload = function() {
+            const saved = localStorage.getItem('rapor_abbs_v58');
+            if(saved) {
+                const d = JSON.parse(saved);
+                if(d.dinas) {
+                    document.getElementById('dinasSekolah').value = d.dinas.sekolah || '';
+                    document.getElementById('dinasAlamat').value = d.dinas.alamat || '';
+                    document.getElementById('dinasKepsek').value = d.dinas.kepsek || '';
+                    document.getElementById('dinasFase').value = d.dinas.fase || '';
+                    document.getElementById('dinasSem').value = d.dinas.sem || '';
+                    document.getElementById('dinasThn').value = d.dinas.thn || '';
+                    document.getElementById('dinasTgl').value = d.dinas.tgl || '';
+                    document.getElementById('dinasWali').value = d.dinas.wali || '';
+                    document.getElementById('dinasNIP').value = d.dinas.nip || '';
+                }
+                if(d.ila) {
+                    document.getElementById('ilaSekolah').value = d.ila.sekolah || '';
+                    document.getElementById('ilaTgl').value = d.ila.tgl || '';
+                    document.getElementById('ilaWali').value = d.ila.wali || '';
+                }
             }
+        };
+
+        function getDataAndConf(type) {
+            const wb = type === 'dinas' ? wbDinas : wbILA;
+            if(!wb) return null;
+            const sheet = document.getElementById(type === 'dinas' ? 'sheetDinas' : 'sheetILA').value;
+            const rawData = XLSX.utils.sheet_to_json(wb.Sheets[sheet], {defval:''});
+            const data = rawData.filter(s => s.Nama || s['Nama Siswa']); 
+
+            if(type === 'dinas') globalDataDinas = data; else globalDataILA = data;
+
+            const conf = {};
+            if(type === 'dinas') {
+                conf.sekolah = document.getElementById('dinasSekolah').value;
+                conf.alamat = document.getElementById('dinasAlamat').value;
+                conf.kepsek = document.getElementById('dinasKepsek').value;
+                conf.fase = document.getElementById('dinasFase').value;
+                conf.sem = document.getElementById('dinasSem').value;
+                conf.thn = document.getElementById('dinasThn').value;
+                conf.tgl = document.getElementById('dinasTgl').value;
+                conf.wali = document.getElementById('dinasWali').value;
+                conf.nip = document.getElementById('dinasNIP').value;
+                conf.kelas = document.getElementById('dinasKelas').value;
+            } else {
+                conf.kelas = document.getElementById('ilaKelas').value;
+                conf.sekolah = document.getElementById('ilaSekolah').value;
+                conf.tgl = document.getElementById('ilaTgl').value;
+                conf.wali = document.getElementById('ilaWali').value;
+            }
+            return {data, conf};
         }
 
-        function generateStudentDOM(siswa, conf) {
-            const studentPages = []; 
-            let pageNum = 1;
+        // --- PREVIEW ---
+        function processPreview(type) {
+            const res = getDataAndConf(type);
+            if(!res) { Swal.fire('Oops...', 'Silakan upload file leger terlebih dahulu!', 'warning'); return; }
+            
+            const selId = type === 'dinas' ? 'studentSelectorDinas' : 'studentSelectorILA';
+            const selector = document.getElementById(selId);
+            selector.innerHTML = '';
+            res.data.forEach((s, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.text = (i+1) + ". " + (s.Nama || s['Nama Siswa']);
+                selector.appendChild(opt);
+            });
+            studentIndex[type] = 0; 
+            renderUI(type, res.data, res.conf);
+        }
 
-            const sakitVal = siswa['SAKIT'] || siswa['SAKIT '] || siswa['Sakit'] || siswa['sakit'] || '-';
-            const izinVal = siswa['IJIN'] || siswa['IJIN '] || siswa['Ijin'] || siswa['IZIN'] || '-';
-            const alphaVal = siswa['TANPA KETERANGAN'] || siswa['Tanpa Keterangan'] || siswa['ALPHA'] || siswa['Alpha'] || '-';
+        function renderUI(type, data, conf) {
+            const out = document.getElementById(type === 'dinas' ? 'outputDinas' : 'outputILA');
+            out.innerHTML = "";
+            const hiddenProc = document.getElementById('hidden-processing');
+            hiddenProc.innerHTML = '';
 
-            const namaSiswa = toTitleCase(siswa.Nama);
+            const mode = viewMode[type];
+            const idx = studentIndex[type];
 
-            const headerHTML = `
-            <div class="header-container">
-                <table class="identitas">
-                    <colgroup>
-                        <col style="width:130px;">
-                        <col style="width:10px;">
-                        <col style="width:auto;">
-                        <col style="width:140px;">
-                        <col style="width:10px;">
-                        <col style="width:150px;">
-                    </colgroup>
-                    <tr>
-                        <td>Nama Peserta Didik</td><td>:</td>
-                        <td>${namaSiswa}</td>
-                        <td>Kelas</td><td>:</td>
-                        <td>${conf.kelas}</td>
-                    </tr>
-                    <tr>
-                        <td>NIS / NISN</td><td>:</td>
-                        <td>${siswa.NIS||'-'} / ${siswa.NISN||'-'}</td>
-                        <td>Fase</td><td>:</td>
-                        <td>${conf.fase}</td>
-                    </tr>
-                    <tr>
-                        <td>Nama Sekolah</td><td>:</td>
-                        <td>${conf.sekolah}</td>
-                        <td>Semester</td><td>:</td>
-                        <td>${conf.sem}</td>
-                    </tr>
-                    <tr>
-                        <td>Alamat Sekolah</td><td>:</td>
-                        <td style="font-size:10.5pt;">${conf.alamat}</td>
-                        <td>Tahun Pelajaran</td><td>:</td>
-                        <td>${conf.thn}</td>
-                    </tr>
-                </table>
-            </div>`;
+            if (mode === 'all') {
+                data.forEach(siswa => {
+                    const pages = (type === 'dinas') ? generateDinasPages(siswa, conf, hiddenProc) : generateILAPages(siswa, conf);
+                    pages.forEach(p => out.appendChild(p));
+                });
+            } else {
+                const siswa = data[idx];
+                document.getElementById(type === 'dinas' ? 'studentSelectorDinas' : 'studentSelectorILA').value = idx;
+                const pages = (type === 'dinas') ? generateDinasPages(siswa, conf, hiddenProc) : generateILAPages(siswa, conf);
+                pages.forEach(p => out.appendChild(p));
+            }
+            hiddenProc.innerHTML = '';
+        }
 
-            const titleHTML = `<h1 class="judul-rapor">LAPORAN HASIL BELAJAR</h1>`;
+        function setViewMode(mode, type) {
+            viewMode[type] = mode;
+            const btnAll = document.getElementById(type === 'dinas' ? 'btnViewAllDinas' : 'btnViewAllILA');
+            const btnSingle = document.getElementById(type === 'dinas' ? 'btnViewSingleDinas' : 'btnViewSingleILA');
+            const navControl = document.getElementById(type === 'dinas' ? 'navControlsDinas' : 'navControlsILA');
+            
+            btnAll.className = mode === 'all' ? 'view-btn active' : 'view-btn';
+            btnSingle.className = mode === 'single' ? 'view-btn active' : 'view-btn';
+            navControl.style.display = mode === 'single' ? 'flex' : 'none';
+            
+            const res = getDataAndConf(type);
+            if(res) renderUI(type, res.data, res.conf);
+        }
 
-            const getFooter = () => `
-            <div class="footer">
-                <span>${conf.kelas} | ${namaSiswa} | ${siswa.NIS || siswa.NISN || '-'}</span>
-                <span>Halaman ${pageNum}</span>
-            </div>`;
+        function changeStudent(dir, type) {
+            const data = (type === 'dinas') ? globalDataDinas : globalDataILA;
+            let newIndex = studentIndex[type] + dir;
+            if(newIndex >= 0 && newIndex < data.length) {
+                studentIndex[type] = newIndex;
+                const res = getDataAndConf(type);
+                if(res) renderUI(type, res.data, res.conf);
+            }
+        }
+        function jumpToStudent(type) {
+            const selId = type === 'dinas' ? 'studentSelectorDinas' : 'studentSelectorILA';
+            studentIndex[type] = parseInt(document.getElementById(selId).value);
+            const res = getDataAndConf(type);
+            if(res) renderUI(type, res.data, res.conf);
+        }
 
-            const createSheet = (isFirstPage) => {
-                const d = document.createElement('div');
-                d.className = 'sheet';
+        // ==========================================
+        //  CORE ENGINE: DOM -> CANVAS -> PDF
+        // ==========================================
+        
+        async function elementToImage(element) {
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                windowWidth: 210 * 3.7795275591, 
+                windowHeight: 297 * 3.7795275591
+            });
+            return canvas.toDataURL('image/jpeg', 0.9);
+        }
+
+        // --- BATCH PDF DOWNLOAD ---
+        async function generateBatchPDF(type) {
+            const res = getDataAndConf(type);
+            if(!res) { Swal.fire('Oops...', 'Upload file dulu!', 'warning'); return; }
+            
+            const btn = type === 'dinas' ? document.querySelector('#app-dinas .bg-green') : document.querySelector('#app-ila .bg-green');
+            const progDiv = document.getElementById(type === 'dinas' ? 'progDinas' : 'progILA');
+            const progFill = document.getElementById(type === 'dinas' ? 'fillDinas' : 'fillILA');
+            const progText = document.getElementById(type === 'dinas' ? 'txtDinas' : 'txtILA');
+            const hiddenDiv = document.getElementById('hidden-processing');
+            
+            btn.disabled = true; progDiv.style.display = 'block';
+
+            try {
+                const pdfDoc = await PDFLib.PDFDocument.create();
+                const total = res.data.length;
+                const A4_W = 595.28;
+                const A4_H = 841.89;
+
+                for (let i = 0; i < total; i++) {
+                    const siswa = res.data[i];
+                    
+                    const pct = Math.round(((i+1)/total)*100);
+                    progFill.style.width = pct + "%";
+                    progText.innerText = `Mengonversi Data Siswa: ${i+1}/${total} (${siswa.Nama || siswa['Nama Siswa']})`;
+                    await new Promise(r => setTimeout(r, 10)); 
+
+                    hiddenDiv.innerHTML = '';
+                    const pages = (type === 'dinas') 
+                        ? generateDinasPages(siswa, res.conf, hiddenDiv) 
+                        : generateILAPages(siswa, res.conf);
+
+                    for (const pageEl of pages) {
+                        const textContent = pageEl.innerText.trim();
+                        const hasImages = pageEl.querySelectorAll('img').length > 0;
+                        const hasTables = pageEl.querySelectorAll('table').length > 0;
+                        
+                        if (textContent.length < 5 && !hasImages && !hasTables) continue;
+
+                        hiddenDiv.innerHTML = '';
+                        hiddenDiv.appendChild(pageEl);
+
+                        const imgData = await elementToImage(pageEl);
+                        const img = await pdfDoc.embedJpg(imgData);
+                        const page = pdfDoc.addPage([A4_W, A4_H]);
+                        page.drawImage(img, { x: 0, y: 0, width: A4_W, height: A4_H });
+                    }
+                }
+
+                progText.innerText = "Menyimpan File PDF...";
+                const pdfBytes = await pdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: "application/pdf" });
+                saveAs(blob, `Rapor ${type.toUpperCase()} ${res.conf.kelas}.pdf`);
                 
-                let content = headerHTML;
-                if (isFirstPage) content += titleHTML;
+                Swal.fire({ icon: 'success', title: 'Selesai!', text: 'File PDF berhasil diunduh.', timer: 2000 });
 
-                d.innerHTML = content + '<div class="content-body"></div>' + getFooter();
+            } catch (err) {
+                console.error(err);
+                Swal.fire({ icon: 'error', title: 'Terjadi Kesalahan', text: err.message });
+            } finally {
+                hiddenDiv.innerHTML = '';
+                btn.disabled = false; progDiv.style.display = 'none';
+            }
+        }
+
+        // --- BATCH ZIP DOWNLOAD ---
+        async function generateBatchZIP(type) {
+            const res = getDataAndConf(type);
+            if(!res) { Swal.fire('Oops...', 'Upload file dulu!', 'warning'); return; }
+
+            const btn = type === 'dinas' ? document.querySelector('#app-dinas .bg-orange') : document.querySelector('#app-ila .bg-orange');
+            const progDiv = document.getElementById(type === 'dinas' ? 'progDinas' : 'progILA');
+            const progFill = document.getElementById(type === 'dinas' ? 'fillDinas' : 'fillILA');
+            const progText = document.getElementById(type === 'dinas' ? 'txtDinas' : 'txtILA');
+            const hiddenDiv = document.getElementById('hidden-processing');
+            
+            btn.disabled = true; progDiv.style.display = 'block';
+
+            const zip = new JSZip();
+            const total = res.data.length;
+            const A4_W = 595.28;
+            const A4_H = 841.89;
+
+            try {
+                for (let i = 0; i < total; i++) {
+                    const siswa = res.data[i];
+                    const name = siswa.Nama || siswa['Nama Siswa'];
+                    const no = siswa['No'] || (i+1);
+                    
+                    progFill.style.width = Math.round(((i+1)/total)*100) + "%";
+                    progText.innerText = `Memproses ZIP: ${name} (${i+1}/${total})`;
+                    await new Promise(r => setTimeout(r, 10));
+
+                    const pdfDoc = await PDFLib.PDFDocument.create();
+                    hiddenDiv.innerHTML = '';
+                    const pages = (type === 'dinas') 
+                        ? generateDinasPages(siswa, res.conf, hiddenDiv) 
+                        : generateILAPages(siswa, res.conf);
+
+                    for (const pageEl of pages) {
+                        const textContent = pageEl.innerText.trim();
+                        const hasImages = pageEl.querySelectorAll('img').length > 0;
+                        const hasTables = pageEl.querySelectorAll('table').length > 0;
+                        if (textContent.length < 5 && !hasImages && !hasTables) continue;
+
+                        hiddenDiv.innerHTML = '';
+                        hiddenDiv.appendChild(pageEl);
+
+                        const imgData = await elementToImage(pageEl);
+                        const img = await pdfDoc.embedJpg(imgData);
+                        const page = pdfDoc.addPage([A4_W, A4_H]);
+                        page.drawImage(img, { x: 0, y: 0, width: A4_W, height: A4_H });
+                    }
+
+                    const pdfBytes = await pdfDoc.save();
+                    zip.file(`${no} ${type.toUpperCase()} ${name}.pdf`, pdfBytes);
+                }
+
+                progText.innerText = "Mengompres ZIP...";
+                const content = await zip.generateAsync({type:"blob"});
+                saveAs(content, `Rapor ${type.toUpperCase()} ${res.conf.kelas} Per Siswa.zip`);
+                Swal.fire({ icon: 'success', title: 'Selesai!', text: 'File ZIP berhasil diunduh.', timer: 2000 });
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
+            } finally {
+                hiddenDiv.innerHTML = '';
+                btn.disabled = false; progDiv.style.display = 'none';
+            }
+        }
+
+        // --- PAGE GENERATORS ---
+
+        function generateDinasPages(siswa, conf, measureContainer) {
+            let pageNum = 1;
+            const pages = [];
+            const row = (n,m,v,d) => `<tr><td class="cell-center">${n}</td><td class="cell-left">${m}</td><td class="cell-center bold">${v||''}</td><td class="cell-justify" style="font-size:10pt;">${d||''}</td></tr>`;
+            const sakit=siswa['SAKIT']||siswa['Sakit']||'-', izin=siswa['IJIN']||siswa['Ijin']||'-', alpha=siswa['TANPA KETERANGAN']||siswa['Tanpa Keterangan']||'-';
+            
+            const headerHTML = `<div class="header-container"><table class="dinas-header"><colgroup><col style="width:130px;"><col style="width:10px;"><col><col style="width:130px;"><col style="width:10px;"><col style="width:100px;"></colgroup><tr><td>Nama Peserta Didik</td><td>:</td><td>${toTitleCase(siswa.Nama)}</td><td>Kelas</td><td>:</td><td>${conf.kelas}</td></tr><tr><td>NIS / NISN</td><td>:</td><td>${siswa.NIS||'-'} / ${siswa.NISN||'-'}</td><td>Fase</td><td>:</td><td>${conf.fase}</td></tr><tr><td>Nama Sekolah</td><td>:</td><td>${conf.sekolah}</td><td>Semester</td><td>:</td><td>${conf.sem}</td></tr><tr><td>Alamat Sekolah</td><td>:</td><td style="font-size:11pt;">${conf.alamat}</td><td>Tahun Pelajaran</td><td>:</td><td>${conf.thn}</td></tr></table><div class="header-separator"></div></div>`;
+            const titleHTML = `<h1 class="dinas-title">LAPORAN HASIL BELAJAR</h1>`;
+            
+            const createSheet = (isFirst) => {
+                const d = document.createElement('div'); 
+                d.className = 'sheet sheet-dinas';
+                d.innerHTML = headerHTML + (isFirst ? titleHTML : '') + '<div class="content-body"></div>' + `<div class="dinas-footer"><span>${conf.kelas} | ${toTitleCase(siswa.Nama)} | ${siswa.NIS||'-'}</span><span class="pg-num">Halaman 1</span></div>`;
                 return d;
             };
 
             let curSheet = createSheet(true);
+            if(measureContainer) measureContainer.appendChild(curSheet);
             let curBody = curSheet.querySelector('.content-body');
-            pageNum++;
-            studentPages.push(curSheet);
+            pages.push(curSheet);
 
-            const tempContainer = document.getElementById('hiddenContainer');
-            tempContainer.innerHTML = ''; 
+            const appendBlock = (html) => {
+                const w = document.createElement('div'); w.innerHTML = html;
+                curBody.appendChild(w);
+                if(curBody.scrollHeight > curBody.clientHeight) {
+                    curBody.removeChild(w); 
+                    pageNum++;
+                    curSheet = createSheet(false); 
+                    curBody = curSheet.querySelector('.content-body');
+                    if(measureContainer) measureContainer.appendChild(curSheet);
+                    pages.push(curSheet);
+                    curBody.appendChild(w); 
+                }
+            };
 
-            function appendToSheet(html) {
-                if (!curSheet.isConnected) tempContainer.appendChild(curSheet);
-                const t = document.createElement('div');
-                t.innerHTML = html;
-                const el = t.firstElementChild;
-                curBody.appendChild(el);
+            const appendTable = (head, rows) => {
+                let tbl = document.createElement('table'); tbl.className = 'dinas-table';
+                tbl.innerHTML = `<thead>${head}</thead><tbody></tbody>`;
+                curBody.appendChild(tbl); let tbody = tbl.querySelector('tbody');
                 
                 if(curBody.scrollHeight > curBody.clientHeight) {
-                    curBody.removeChild(el);
-                    curSheet = createSheet(false);
-                    curBody = curSheet.querySelector('.content-body');
+                    curBody.removeChild(tbl); 
                     pageNum++;
-                    studentPages.push(curSheet);
-                    tempContainer.appendChild(curSheet);
-                    curBody.appendChild(el);
-                }
-            }
-            
-            function appendTable(head, rows, cls="data-table") {
-                if (!curSheet.isConnected) tempContainer.appendChild(curSheet);
-                let tbl = document.createElement('table');
-                tbl.className = cls;
-                tbl.innerHTML = `<thead>${head}</thead><tbody></tbody>`;
-                curBody.appendChild(tbl);
-                let tbody = tbl.querySelector('tbody');
-
-                if(curBody.scrollHeight > curBody.clientHeight) {
-                    curBody.removeChild(tbl);
-                    curSheet = createSheet(false);
-                    curBody = curSheet.querySelector('.content-body');
-                    pageNum++;
-                    studentPages.push(curSheet);
-                    tempContainer.appendChild(curSheet);
-                    tbl = document.createElement('table');
-                    tbl.className = cls;
-                    tbl.innerHTML = `<thead>${head}</thead><tbody></tbody>`;
-                    curBody.appendChild(tbl);
-                    tbody = tbl.querySelector('tbody');
+                    curSheet = createSheet(false); curBody = curSheet.querySelector('.content-body');
+                    if(measureContainer) measureContainer.appendChild(curSheet);
+                    pages.push(curSheet);
+                    tbl = document.createElement('table'); tbl.className = 'dinas-table'; tbl.innerHTML = `<thead>${head}</thead><tbody></tbody>`;
+                    curBody.appendChild(tbl); tbody = tbl.querySelector('tbody');
                 }
 
                 rows.forEach(r => {
-                    const temp = document.createElement('tbody');
-                    temp.innerHTML = r;
-                    const tr = temp.firstElementChild;
+                    const t = document.createElement('tbody'); t.innerHTML = r; const tr = t.firstElementChild;
                     tbody.appendChild(tr);
                     if(curBody.scrollHeight > curBody.clientHeight) {
                         tbody.removeChild(tr);
-                        curSheet = createSheet(false);
-                        curBody = curSheet.querySelector('.content-body');
                         pageNum++;
-                        studentPages.push(curSheet);
-                        tempContainer.appendChild(curSheet);
-                        tbl = document.createElement('table');
-                        tbl.className = cls;
-                        tbl.innerHTML = `<thead>${head}</thead><tbody></tbody>`;
-                        curBody.appendChild(tbl);
-                        tbody = tbl.querySelector('tbody');
-                        tbody.appendChild(tr);
+                        curSheet = createSheet(false); curBody = curSheet.querySelector('.content-body');
+                        if(measureContainer) measureContainer.appendChild(curSheet);
+                        pages.push(curSheet);
+                        tbl = document.createElement('table'); tbl.className = 'dinas-table'; tbl.innerHTML = `<thead>${head}</thead><tbody></tbody>`;
+                        curBody.appendChild(tbl); tbody = tbl.querySelector('tbody'); tbody.appendChild(tr);
                     }
                 });
-            }
-
-            appendToSheet(`<h3>A. Intrakurikuler</h3>`);
-            appendTable(
-                `<tr><th width="5%">No</th><th width="35%">Mata Pelajaran</th><th width="10%">Nilai Akhir</th><th>Capaian Kompetensi</th></tr>`,
-                [
-                    row(1, "Pendidikan Agama Islam dan Budi Pekerti", siswa.PAI, siswa.des_PAI),
-                    row(2, "Pendidikan Pancasila", siswa.Pkn, siswa.des_Pkn),
-                    row(3, "Bahasa Indonesia", siswa.Indo, siswa.des_indo),
-                    row(4, "Matematika (Umum)", siswa.Math, siswa.des_Math),
-                    row(5, "Ilmu Pengetahuan Alam (IPA)", siswa.IPA, siswa.des_IPA),
-                    row(6, "Ilmu Pengetahuan Sosial (IPS)", siswa.IPS, siswa.des_IPS),
-                    row(7, "Bahasa Inggris", siswa.English, siswa.des_english),
-                    row(8, "Seni dan Budaya", siswa.NILAI_SBK, siswa.des_SBK),
-                    row(9, "Pendidikan Jasmani, Olahraga, dan Kesehatan", siswa.Sport, siswa.des_Sport),
-                    row(10, "Informatika", siswa.ICT, siswa.des_ICT),
-                    row(11, "Bahasa Jawa", siswa.jawa, siswa.des_jawa)
-                ]
-            );
-
-            appendToSheet(`<h3>B. Kokurikuler</h3>`);
-            appendTable(
-                `<tr><th>Deskripsi</th></tr>`,
-                [`<tr><td style="height:60px; text-align:justify;">${siswa['Deskripsi Kokurikuler']||"-"}</td></tr>`],
-                "koku-table"
-            );
-
-            appendToSheet(`<h3>C. Ekstrakurikuler</h3>`);
-            
-            // MODIFIKASI: Menambahkan class toggle-text dan onclick
-            appendTable(
-                `<tr><th width="5%">No</th><th width="40%">Kegiatan Ekstrakurikuler</th><th width="10%">Predikat</th><th>Keterangan</th></tr>`,
-                [
-                    `<tr>
-                        <td class="center">1</td>
-                        <td>
-                            <span class="toggle-text" onclick="toggleStrike(this)">Kepramukaan</span> / 
-                            <span class="toggle-text" onclick="toggleStrike(this)">PMR</span>
-                        </td>
-                        <td class="center bold">${siswa['Predikat']||'-'}</td>
-                        <td>${siswa['Deskripsi PRAMUKA / PMR']||'-'}</td>
-                    </tr>`,
-                    `<tr><td class="center">2</td><td>${siswa.NAMA_SD||'Self Development'}</td><td class="center bold">${siswa.predikat||'-'}</td><td>${siswa.des_SD||'-'}</td></tr>`
-                ]
-            );
-
-            appendToSheet(`<h3>D. Ketidakhadiran</h3>`);
-            appendToSheet(`
-                <table class="absensi-table">
-                    <tr><td style="width:50%;">Sakit</td><td>: ${sakitVal} hari</td></tr>
-                    <tr><td>Izin</td><td>: ${izinVal} hari</td></tr>
-                    <tr><td>Tanpa Keterangan</td><td>: ${alphaVal} hari</td></tr>
-                </table>
-            `);
-
-            appendToSheet(`<h3>E. Catatan Wali Kelas</h3>`);
-            appendToSheet(`<div class="catatan-box">${siswa['CATATAN WALAS']||'-'}</div>`);
-
-            appendToSheet(`
-                <div style="margin-top:20px;">
-                    <div class="signature-section">
-                        <div class="sign-box">
-                            <p>Mengetahui,<br>Orang Tua/Wali</p>
-                            <div class="space-sign"></div>
-                            <p>(................................)</p>
-                        </div>
-                        <div class="sign-box">
-                            <p>${conf.tgl}<br>Wali Kelas,</p>
-                            <div class="space-sign"></div>
-                            <p><u><strong>${conf.wali}</strong></u><br>NIP. ${conf.nip}</p>
-                        </div>
-                    </div>
-                    <div class="headmaster">
-                        <p>Mengetahui,<br>Kepala SMP ABBS Surakarta</p>
-                        <div class="space-sign"></div>
-                        <p><u><strong>${conf.kepsek}</strong></u><br>NIP. -</p>
-                    </div>
-                </div>
-            `);
-
-            tempContainer.innerHTML = '';
-            return studentPages;
-        }
-
-        function renderPreview() {
-            if(!globalWorkbook) { alert("Upload file dulu!"); return; }
-            const sheetName = document.getElementById('sheetSelect').value;
-            if(!sheetName) { alert("Pilih sheet dulu!"); return; }
-            
-            updateFileName();
-            
-            const worksheet = globalWorkbook.Sheets[sheetName];
-            const data = XLSX.utils.sheet_to_json(worksheet, {defval:''});
-            const out = document.getElementById('outputArea');
-            out.innerHTML = "";
-            
-            const conf = getConfig();
-
-            data.forEach(siswa => {
-                if(!siswa.Nama) return;
-                const pages = generateStudentDOM(siswa, conf);
-                pages.forEach(p => out.appendChild(p));
-            });
-            
-            if(window.innerWidth < 1000) toggleSidebar(); 
-        }
-
-        function cetakPDF() {
-            updateFileName();
-            window.print();
-        }
-
-        async function downloadZIP() {
-            if(!globalWorkbook) { alert("Upload file dulu!"); return; }
-            const sheetName = document.getElementById('sheetSelect').value;
-            if(!sheetName) { alert("Pilih sheet dulu!"); return; }
-
-            const worksheet = globalWorkbook.Sheets[sheetName];
-            const data = XLSX.utils.sheet_to_json(worksheet, {defval:''});
-            const conf = getConfig();
-
-            const btn = document.getElementById('btnZip');
-            const progCont = document.getElementById('zipProgressContainer');
-            const progBar = document.getElementById('zipProgressFill');
-            const progText = document.getElementById('zipStatusText');
-            
-            btn.disabled = true;
-            progCont.style.display = 'block';
-            
-            const zip = new JSZip();
-            const folder = zip.folder(`Rapor ${conf.kelas}`);
-            const validStudents = data.filter(s => s.Nama);
-            const total = validStudents.length;
-            const container = document.getElementById('hiddenContainer');
-
-            for (let i = 0; i < total; i++) {
-                const siswa = validStudents[i];
-                const percent = Math.round(((i + 1) / total) * 100);
-                progBar.style.width = percent + "%";
-                progText.innerText = `Memproses: ${toTitleCase(siswa.Nama)} (${i+1}/${total})`;
-
-                container.innerHTML = '';
-                const pages = generateStudentDOM(siswa, conf);
-                const wrapper = document.createElement('div');
-                pages.forEach(p => wrapper.appendChild(p));
-                container.appendChild(wrapper);
-
-                const opt = {
-                    margin: 0,
-                    filename: `${toTitleCase(siswa.Nama)}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-
-                await html2pdf().set(opt).from(wrapper).outputPdf('blob').then(blob => {
-                    folder.file(`${toTitleCase(siswa.Nama)}.pdf`, blob);
-                });
-                await new Promise(r => setTimeout(r, 100));
-            }
-
-            progText.innerText = "Mengkompres file ZIP...";
-            zip.generateAsync({type:"blob"}).then(function(content) {
-                saveAs(content, `Rapor kelas ${conf.kelas}.zip`);
-                btn.disabled = false;
-                progText.innerText = "Selesai!";
-                setTimeout(() => { progCont.style.display = 'none'; }, 3000);
-                container.innerHTML = '';
-            });
-        }
-
-        function getConfig() {
-            return {
-                sekolah: document.getElementById('inpSekolah').value,
-                alamat: document.getElementById('inpAlamat').value,
-                kepsek: document.getElementById('inpKepsek').value,
-                fase: document.getElementById('inpFase').value,
-                sem: document.getElementById('inpSem').value,
-                thn: document.getElementById('inpThn').value,
-                tgl: document.getElementById('inpTgl').value,
-                wali: document.getElementById('inpWali').value,
-                nip: document.getElementById('inpNIP').value,
-                kelas: document.getElementById('inpKelas').value
             };
+
+            appendBlock(`<h3 class="dinas-sub">A. Intrakurikuler</h3>`);
+            appendTable(`<tr><th width="5%">No</th><th width="35%">Mata Pelajaran</th><th width="10%">Nilai Akhir</th><th>Capaian Kompetensi</th></tr>`, [
+                row(1, "PAI & Budi Pekerti", siswa.PAI, siswa.des_PAI), row(2, "Pendidikan Pancasila", siswa.Pkn, siswa.des_Pkn), row(3, "Bahasa Indonesia", siswa.Indo, siswa.des_indo), row(4, "Matematika (Umum)", siswa.Math, siswa.des_Math), row(5, "IPA", siswa.IPA, siswa.des_IPA), row(6, "IPS", siswa.IPS, siswa.des_IPS), row(7, "Bahasa Inggris", siswa.English, siswa.des_english), row(8, "Seni Budaya", siswa.NILAI_SBK, siswa.des_SBK), row(9, "PJOK", siswa.Sport, siswa.des_Sport), row(10, "Informatika", siswa.ICT, siswa.des_ICT), row(11, "Bahasa Jawa", siswa.jawa, siswa.des_jawa)
+            ]);
+            appendBlock(`<h3 class="dinas-sub">B. Kokurikuler</h3><table class="dinas-table"><tr><th>Deskripsi</th></tr><tr><td style="height:60px; text-align:justify;">${siswa['Deskripsi Kokurikuler']||'-'}</td></tr></table>`);
+            appendBlock(`<h3 class="dinas-sub">C. Ekstrakurikuler</h3><table class="dinas-table"><tr><th>No</th><th>Kegiatan</th><th>Predikat</th><th>Keterangan</th></tr><tr><td class="cell-center">1</td><td class="cell-left"><span class="toggle-text" onclick="toggleStrike(this)">Kepramukaan</span> / <span class="toggle-text" onclick="toggleStrike(this)">PMR</span></td><td class="cell-center bold">${siswa['Predikat']||'-'}</td><td class="cell-left">${siswa['Deskripsi PRAMUKA / PMR']||'-'}</td></tr><tr><td class="cell-center">2</td><td class="cell-left">${siswa.NAMA_SD||'Self Dev'}</td><td class="cell-center bold">${siswa.predikat||'-'}</td><td class="cell-left">${siswa.des_SD||'-'}</td></tr></table>`);
+            appendBlock(`<h3 class="dinas-sub">D. Ketidakhadiran</h3><table class="dinas-table" style="width:50%"><tr><td class="cell-left">Sakit</td><td class="cell-left">: ${sakit} hari</td></tr><tr><td class="cell-left">Izin</td><td class="cell-left">: ${izin} hari</td></tr><tr><td class="cell-left">Tanpa Ket.</td><td class="cell-left">: ${alpha} hari</td></tr></table>`);
+            appendBlock(`<h3 class="dinas-sub">E. Catatan Wali Kelas</h3><div class="catatan-box">${siswa['CATATAN WALAS']||'-'}</div>`);
+            
+            appendBlock(`
+            <div class="signature-container">
+                <div class="signature-grid"><div class="sig-box"><p>Mengetahui,<br>Orang Tua/Wali</p><div class="space-sign"></div><p>(...................)</p></div><div class="sig-box"><p>${conf.tgl}<br>Wali Kelas,</p><div class="space-sign"></div><p><u><strong>${conf.wali}</strong></u><br>NIP. ${conf.nip}</p></div><div class="sig-box-center"><p>Mengetahui,<br>Kepala Sekolah</p><div class="space-sign"></div><p><u><strong>${conf.kepsek}</strong></u><br>NIP. -</p></div></div>
+            </div>`);
+
+            pages.forEach((p, i) => { p.querySelector('.pg-num').innerText = `Halaman ${i + 1}`; });
+            return pages;
         }
 
-        function row(no, m, n, d) {
-            return `<tr><td class="center">${no}</td><td>${m}</td><td class="center bold">${n||''}</td><td style="text-align:justify;">${d||''}</td></tr>`;
+        function generateILAPages(siswa, conf) {
+            const pages = [];
+            const dim1 = ilaStructure[0]; const dim2 = ilaStructure[1];
+            const p1Data = [dim1.vals[0]]; 
+            const p2Data = [dim1.vals[1], dim1.vals[2], dim1.vals[3], dim1.vals[4]];
+            const p3Data = [dim1.vals[5], dim1.vals[6], dim1.vals[7], dim1.vals[8]];
+            const p4Data = dim2.vals;
+
+            const headerHTML = `
+                <div class="ila-h1">International Leadership Al Abidin Report</div>
+                <div class="ila-info-container">
+                    <div class="ila-info-col"><table class="ila-info-table"><tr><td width="70">School</td><td width="10">:</td><td class="val">${conf.sekolah}</td></tr><tr><td>Number</td><td>:</td><td class="val">${siswa['No']||'-'}</td></tr></table></div>
+                    <div class="ila-info-col"><table class="ila-info-table"><tr><td width="70">Name</td><td width="10">:</td><td class="val">${toTitleCase(siswa['Nama Siswa'] || siswa.Nama)}</td></tr><tr><td>Class</td><td>:</td><td class="val">${conf.kelas}</td></tr></table></div>
+                </div>`;
+            const scoringCardHTML = `<div class="scoring-card"><div class="scoring-title">Grading Scale Description</div><div class="scoring-grid"><div class="score-box"><div class="sb-head">5</div><div class="sb-body"><span class="sb-label">Highly Developed (HD)</span> Students consistently demonstrate...</div></div><div class="score-box"><div class="sb-head">4</div><div class="sb-body"><span class="sb-label">Developed as Expected (DSE)</span> Students consistently or often demonstrate...</div></div><div class="score-box"><div class="sb-head">3</div><div class="sb-body"><span class="sb-label">Starting to Develop (SD)</span> Students are starting to demonstrate...</div></div><div class="score-box"><div class="sb-head">2</div><div class="sb-body"><span class="sb-label">Needs Improvement (DI)</span> Students show few signs...</div></div><div class="score-box"><div class="sb-head">1</div><div class="sb-body"><span class="sb-label">Not Yet Developed (NYD)</span> Students have not yet demonstrated...</div></div></div></div>`;
+            const getFooter = (p) => `<div class="dinas-footer"><span>${conf.kelas} | ${toTitleCase(siswa['Nama Siswa'] || siswa.Nama)} | ${siswa['No']||'-'}</span><span>Page ${p}</span></div>`;
+
+            const createPage = (num, content, includeScoring=false, dimTitle="", includeSig=false) => {
+                const d = document.createElement('div'); d.className = 'sheet sheet-ila';
+                let inner = headerHTML;
+                if(includeScoring) inner += scoringCardHTML;
+                if(dimTitle) inner += `<div class="ila-dim-title">${dimTitle}</div>`;
+                inner += content;
+                if(includeSig) {
+                    inner += `<div class="ila-sig-section"><div class="ila-sig-box"><p>${conf.tgl}<br>Homeroom Teacher</p><div class="space-sign" style="height:60px;"></div><p><u><strong>${conf.wali}</strong></u></p></div></div>`;
+                }
+                inner += '<div class="content-body"></div>' + getFooter(num);
+                d.innerHTML = inner;
+                return d;
+            };
+
+            const renderVals = (vals) => {
+                let h = "";
+                vals.forEach(val => {
+                    h += `<div class="ila-val-title">${val.name}</div><div class="ila-table-container"><table class="ila-table"><thead><tr><th style="width:50%;">Indicator</th><th class="col-score">Parents</th><th class="col-score">School</th><th class="col-score">Student</th></tr></thead><tbody>`;
+                    val.cats.forEach(cat => {
+                        h += `<tr class="row-category"><td colspan="4">${cat.code} ${cat.title}</td></tr>`;
+                        cat.inds.forEach(ind => {
+                            let p=getScore(siswa,'Ortu',ind.c), g=getScore(siswa,'Guru',ind.c), s=getScore(siswa,'Siswa',ind.c);
+                            h += `<tr><td class="indicator-text">${ind.c}. ${ind.t}</td><td class="col-score">${p}</td><td class="col-score">${g}</td><td class="col-score">${s}</td></tr>`;
+                        });
+                    });
+                    h += `</tbody></table></div>`;
+                });
+                return h;
+            };
+
+            pages.push(createPage(1, renderVals(p1Data), true, dim1.dim));
+            pages.push(createPage(2, renderVals(p2Data), false, ""));
+            pages.push(createPage(3, renderVals(p3Data), false, ""));
+            pages.push(createPage(4, renderVals(p4Data), false, dim2.dim, true));
+
+            return pages;
         }
+
+        function toTitleCase(str) { return str ? str.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : ""; }
+        function toggleStrike(el) { el.classList.toggle('is-crossed'); }
+        function getScore(row, prefix, code) { const keys = Object.keys(row); const target = keys.find(k => k.includes(code) && k.toLowerCase().includes(prefix.toLowerCase())); return target ? row[target] : ''; }
     </script>
 </body>
 </html>
