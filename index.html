@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Rapor Terpadu (V58 - UI Polished)</title>
+    <title>Sistem Rapor Terpadu (V80 - Combined Professional Version)</title>
     
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* --- GLOBAL & LAYOUT --- */
+        /* --- GLOBAL STYLE --- */
         body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #2c3e50; overflow: hidden; display: flex; height: 100vh; }
         
         /* LANDING PAGE */
@@ -28,14 +27,16 @@
 
         /* APP LAYOUT */
         .app-container { display: none; height: 100vh; width: 100%; } 
+        .sidebar { width: 340px; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; z-index: 100; transition: margin-left 0.3s ease; flex-shrink: 0; }
+        .sidebar.closed { margin-left: -340px; }
         
-        /* SIDEBAR */
-        .sidebar { width: 320px; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; z-index: 100; transition: margin-left 0.3s ease; flex-shrink: 0; }
-        .sidebar.closed { margin-left: -320px; }
+        .sidebar-header { display: flex; flex-direction: column; margin-bottom: 15px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .header-actions { display: flex; gap: 5px; }
         
-        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
-        .home-btn { background: #64748b; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-
+        .home-btn { background: #64748b; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .reset-btn { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        
         /* INPUTS */
         fieldset { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; padding: 10px; background: #f8fafc; }
         legend { font-size: 10px; font-weight: bold; text-transform: uppercase; padding: 0 5px; }
@@ -44,21 +45,25 @@
         .input-group label { font-size: 11px; font-weight: 600; margin-bottom: 2px; color: #475569; }
         input[type="text"], select { padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; width: 100%; box-sizing: border-box; }
         
+        /* TTD CONTROLS */
+        .ttd-controls { display: flex; gap: 5px; margin-top: 5px; }
+        .mini-btn { flex: 1; padding: 5px; font-size: 10px; cursor: pointer; border: 1px solid #ccc; background: #fff; border-radius: 4px; }
+        .mini-btn:hover { background: #eee; }
+
         /* ACTION BUTTONS */
         button.action-btn { width: 100%; padding: 12px; margin-top: 8px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: 0.2s; }
         button.action-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        button.action-btn:disabled { background: #ccc !important; cursor: not-allowed; transform: none; }
+        button.action-btn:disabled { background: #ccc !important; cursor: not-allowed; }
         .bg-blue { background: #1e3a8a; } .bg-green { background: #10b981; } .bg-orange { background: #f59e0b; }
         
-        /* PROGRESS BAR (Dipindah ke atas) */
+        /* PROGRESS BAR */
         .progress-container { margin-bottom: 15px; display: none; background: #f1f5f9; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
         .progress-bar { width: 100%; height: 10px; background: #cbd5e1; border-radius: 5px; overflow: hidden; }
         .progress-fill { height: 100%; width: 0%; background: #2563eb; transition: width 0.3s ease-out; background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent); background-size: 1rem 1rem; animation: progress-stripes 1s linear infinite; }
         .progress-text { font-size: 11px; text-align: center; margin-top: 5px; color: #334155; font-weight: 600; }
-
         @keyframes progress-stripes { from { background-position: 1rem 0; } to { background-position: 0 0; } }
 
-        /* MAIN CONTENT */
+        /* MAIN PREVIEW AREA */
         .main-wrapper { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #525659; position: relative; }
         .main-content { 
             flex: 1; overflow-y: auto; padding: 40px; 
@@ -66,7 +71,7 @@
             scroll-behavior: smooth; padding-bottom: 80px; 
         }
 
-        /* TOOLBAR */
+        /* TOOLBAR NAVIGASI */
         .preview-toolbar {
             height: 60px; background: #34495e; color: white; 
             display: flex; align-items: center; justify-content: space-between; 
@@ -75,17 +80,14 @@
         }
         .toolbar-left { display: flex; align-items: center; gap: 15px; }
         .toggle-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-        
         .view-controls { display: flex; background: #2c3e50; border-radius: 5px; padding: 3px; }
         .view-btn { background: none; border: none; color: #95a5a6; padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: bold; border-radius: 4px; transition: 0.2s; }
         .view-btn.active { background: #1e3a8a; color: white; }
-        .view-btn:hover { color: white; }
-
         .nav-controls { display: flex; align-items: center; gap: 10px; display: none; }
         #studentSelector { padding: 6px; border-radius: 4px; font-size: 12px; max-width: 250px; background: #fff; color: #333; border: none;}
         .nav-btn { background: #1e3a8a; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
         
-        /* --- SHEET STYLE (A4) --- */
+        /* --- RAPOR SHEETS --- */
         .sheet {
             background: white; width: 210mm; height: 297mm;
             margin-bottom: 40px; box-sizing: border-box;
@@ -94,52 +96,49 @@
         }
         .content-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* === RAPOR DINAS STYLE === */
+        /* DINAS STYLE (DARI FILE DINAS FIX) */
         .sheet-dinas { padding: 10mm 10mm 20mm 10mm; font-family: 'Times New Roman', Times, serif; color: black; }
         .dinas-header table { width: 100%; border-collapse: collapse; font-size: 11pt; table-layout: fixed; }
         .dinas-header td { padding: 2px 0; vertical-align: top; border: none; word-wrap: break-word; }
         .header-separator { border-bottom: 2px solid black; margin-bottom: 15px; margin-top: 5px; }
         .dinas-title { font-size: 14pt; margin: 10px 0 5px 0; text-align: center; font-weight: bold; text-transform: uppercase; }
         .dinas-sub { font-size: 12pt; margin: 15px 0 5px 0; font-weight: bold; display: inline-block; }
-        
         .dinas-table { width: 100%; border-collapse: collapse; font-size: 11pt; margin-bottom: 5px; }
         .dinas-table th, .dinas-table td { border: 1px solid black; padding: 4px 6px; vertical-align: middle; }
         .dinas-table th { background: #f2f2f2; font-weight: bold; text-align: center; }
         .cell-center { text-align: center !important; } .cell-left { text-align: left !important; } .cell-justify { text-align: justify !important; }
-        
-        .dinas-footer { 
-            position: absolute; bottom: 10mm; left: 10mm; right: 10mm; height: 10mm; 
-            border-top: 2px solid black; padding-top: 5px; font-size: 10pt; 
-            display: flex; justify-content: space-between; align-items: center; 
-        }
+        .dinas-footer { position: absolute; bottom: 10mm; left: 10mm; right: 10mm; height: 10mm; border-top: 2px solid black; padding-top: 5px; font-size: 10pt; display: flex; justify-content: space-between; align-items: center; }
         .catatan-box { width: 100%; border: 1px solid black; padding: 10px; min-height: 80px; box-sizing: border-box; font-size: 11pt; margin-bottom: 10px; }
-        
         .signature-container { margin-top: 20px; }
         .signature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .sig-box { text-align: center; }
-        .sig-box-center { grid-column: 1 / -1; text-align: center; margin-top: 30px; }
-        .space-sign { height: 70px; }
-
-        /* === RAPOR ILA STYLE === */
+        .sig-box { text-align: center; position: relative; }
+        .sig-box-center { grid-column: 1 / -1; text-align: center; margin-top: 30px; position: relative; }
+        .sig-box p, .sig-box-center p { margin: 4px 0; line-height: 1.2; } 
+        .space-sign { height: 50px; width: 100%; position: relative; } 
+        
+        /* ILA STYLE (DARI FILE ILA FIX) */
         .sheet-ila { padding: 40px 50px; font-family: 'Inter', sans-serif; color: #000; }
         .ila-h1 { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 20px; text-transform: uppercase; letter-spacing: 0.5px; color: #1e3a8a; margin: 0 0 5px 0; text-align: center; }
+        
+        /* PERBAIKAN SPASI HALAMAN 1 */
+        .scoring-card { margin-bottom: 8px; }
+        .scoring-card + .ila-dim-title { margin-top: 2px; }
+
         .ila-dim-title { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 16px; color: #d97706; margin-top: 15px; margin-bottom: 5px; border-bottom: 2px solid #d97706; display: inline-block; padding-bottom: 2px; text-transform: uppercase; }
         .ila-val-title { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; color: #1f2937; margin-top: 10px; margin-bottom: 5px; padding-left: 5px; }
-
         .ila-info-container { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
         .ila-info-col { width: 48%; }
         .ila-info-table { width: 100%; font-size: 13px; font-weight: 500; border-collapse: collapse; }
         .ila-info-table td { padding: 2px 0; vertical-align: top; }
         .ila-info-table .val { font-weight: 700; color: #000; }
-
-        .scoring-card { margin-bottom: 15px; }
+        
         .scoring-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #1e3a8a; margin-bottom: 5px; border-bottom: 1px solid #ccc; padding-bottom: 2px; text-align: center; }
         .scoring-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
         .score-box { border: 1px solid #ccc; border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
         .sb-head { background: #1e3a8a; color: white; text-align: center; font-weight: bold; padding: 3px; font-size: 13px; }
-        .sb-body { padding: 5px; text-align: center; font-size: 9px; line-height: 1.2; flex: 1; display: flex; flex-direction: column; justify-content: center; background: #fff; }
+        .sb-body { padding: 5px; text-align: center; font-size: 8px; line-height: 1.2; flex: 1; display: flex; flex-direction: column; justify-content: center; background: #fff; }
         .sb-label { font-weight: 800; color: #d97706; margin-bottom: 2px; display: block; font-size: 9px; }
-
+        
         .ila-table-container { margin-bottom: 10px; }
         .ila-table { width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #000; }
         .ila-table th { background-color: #1e3a8a; color: white; padding: 6px; text-align: center; font-weight: 600; text-transform: uppercase; font-size: 10px; border: 1px solid #000; vertical-align: middle; }
@@ -148,16 +147,30 @@
         .ila-table tr.row-category td { background-color: #f3f4f6; font-weight: 700; color: #1e3a8a; text-transform: uppercase; font-size: 10px; padding: 5px 10px; border: 1px solid #000; }
         .indicator-text { text-align: justify; line-height: 1.3; }
 
-        .ila-sig-section { margin-top: 20px; display: flex; justify-content: flex-end; font-size: 12px; font-weight: 500; }
-        .ila-sig-box { text-align: center; width: 220px; }
+        /* RESUME TABLE V75 (DARI ILA FIX) */
+        .resume-page-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        .resume-title-main { font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; letter-spacing: 1px; }
+        .resume-section { margin-bottom: 25px; }
+        .resume-dim-header { background-color: #e5e7eb; color: #1e3a8a; padding: 8px 10px; font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 14px; border-radius: 4px 4px 0 0; border: 1px solid #000; border-bottom: none; text-transform: uppercase; }
+        .resume-table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: 'Inter', sans-serif; }
+        .resume-table th, .resume-table td { border: 1px solid #000; padding: 8px 10px; vertical-align: middle; }
+        .resume-table th { background-color: #1e3a8a; color: white; font-weight: 600; text-align: center; text-transform: uppercase; font-size: 10px; }
+        .resume-table td.center { text-align: center; }
+        .resume-table td.bold { font-weight: 700; }
+        .resume-desc { text-align: justify; font-size: 10px; line-height: 1.3; }
+
+        .ila-sig-section { margin-top: 40px; display: flex; justify-content: flex-end; font-size: 12px; font-weight: 500; }
+        .ila-sig-box { text-align: center; width: 220px; position: relative; }
+        .ila-sig-box p { margin: 4px 0; line-height: 1.2; } 
         
         .toggle-text { cursor: pointer; } .is-crossed { text-decoration: line-through; color: #555; }
 
+        /* --- DRAGGABLE SIGNATURE STYLE --- */
+        .draggable-sig { position: absolute; max-height: 100px; max-width: 150px; cursor: move; z-index: 10; border: 1px dashed transparent; transition: border 0.2s; }
+        .draggable-sig:hover { border: 1px dashed #2563eb; }
+
         /* Hidden Processing Container */
-        #hidden-processing {
-            position: fixed; left: -9999px; top: 0;
-            width: 210mm;
-        }
+        #hidden-processing { position: fixed; left: -9999px; top: 0; width: 210mm; }
     </style>
 </head>
 <body>
@@ -174,16 +187,17 @@
     <div id="app-dinas" class="app-container">
         <div class="sidebar" id="sidebar-dinas">
             <div class="sidebar-header">
-                <h3 style="margin:0; color:#1e3a8a;">Rapor Dinas</h3>
-                <button class="home-btn" onclick="goHome()">🏠 Menu</button>
+                <div class="header-top"><h3 style="margin:0; color:#1e3a8a;">Rapor Dinas</h3></div>
+                <div class="header-actions">
+                    <button class="home-btn" onclick="goHome()">🏠 Menu</button>
+                    <button class="reset-btn" onclick="resetApp()">🔄 Reset Data</button>
+                </div>
             </div>
-            
             <fieldset>
                 <legend class="leg-dinas">📂 File Leger</legend>
                 <input type="file" id="fileDinas" accept=".xlsx, .xls">
                 <select id="sheetDinas" disabled onchange="autoFillClass('dinas')"><option value="">-- Upload Dulu --</option></select>
             </fieldset>
-
             <fieldset>
                 <legend class="leg-dinas">🏫 Sekolah & Info</legend>
                 <div class="input-group"><label>Sekolah</label><input type="text" id="dinasSekolah" oninput="saveData('dinas')" value="SMP ABBS Surakarta"></div>
@@ -195,23 +209,24 @@
                 <div class="input-group"><label>Tahun Ajaran</label><select id="dinasThn" onchange="saveData('dinas')"><option>2025/2026</option><option>2026/2027</option></select></div>
                 <div class="input-group"><label>Tgl Rapor</label><input type="text" id="dinasTgl" oninput="saveData('dinas')" value="Surakarta, 20 Desember 2025"></div>
             </fieldset>
-
             <fieldset>
                 <legend class="leg-dinas">✍️ Wali Kelas</legend>
                 <div class="input-group"><label>Nama</label><input type="text" id="dinasWali" oninput="saveData('dinas')" value="Febriyono S. Pd, M.Bg"></div>
                 <div class="input-group"><label>NIP</label><input type="text" id="dinasNIP" oninput="saveData('dinas')" value="-"></div>
             </fieldset>
-
+            <fieldset>
+                <legend class="leg-dinas">✍️ Tanda Tangan</legend>
+                <div class="input-group"><label>Upload PNG</label><input type="file" id="sigFileDinas" accept="image/png, image/jpeg"></div>
+                <div class="ttd-controls"><button class="mini-btn" onclick="clearSig('dinas')">❌ Hapus</button><button class="mini-btn" onclick="resetSigPos('dinas')">📍 Reset</button></div>
+            </fieldset>
             <div id="progDinas" class="progress-container">
                 <div class="progress-bar"><div class="progress-fill" id="fillDinas"></div></div>
                 <div class="progress-text" id="txtDinas">Processing...</div>
             </div>
-
             <button class="action-btn bg-blue" onclick="processPreview('dinas')">👁️ Tampilkan Preview</button>
             <button class="action-btn bg-green" onclick="generateBatchPDF('dinas')">📄 Download 1 Kelas (PDF)</button>
             <button class="action-btn bg-orange" onclick="generateBatchZIP('dinas')">📦 Download Per Siswa (ZIP)</button>
         </div>
-
         <div class="main-wrapper">
             <div class="preview-toolbar">
                 <div class="toolbar-left"><button class="toggle-btn" onclick="toggleSidebar('dinas')">☰</button><span style="font-weight:bold; font-size:14px; margin-left:10px;">Preview: Dinas</span></div>
@@ -225,38 +240,34 @@
     <div id="app-ila" class="app-container">
         <div class="sidebar" id="sidebar-ila">
             <div class="sidebar-header">
-                <h3 style="margin:0; color:#d97706;">Rapor ILA</h3>
-                <button class="home-btn" onclick="goHome()">🏠 Menu</button>
+                <div class="header-top"><h3 style="margin:0; color:#d97706;">Rapor ILA</h3></div>
+                <div class="header-actions"><button class="home-btn" onclick="goHome()">🏠 Menu</button><button class="reset-btn" onclick="resetApp()">🔄 Reset</button></div>
             </div>
-
             <fieldset>
                 <legend class="leg-ila">📂 File Leger</legend>
                 <input type="file" id="fileILA" accept=".xlsx, .xls">
                 <select id="sheetILA" disabled onchange="autoFillClass('ila')"><option value="">-- Upload Dulu --</option></select>
             </fieldset>
-
-            <fieldset>
-                <legend class="leg-ila">👤 Data Siswa</legend>
-                <div class="input-group"><label>Kelas</label><input type="text" id="ilaKelas"></div>
-            </fieldset>
-
             <fieldset>
                 <legend class="leg-ila">⚙️ Info Rapor</legend>
-                <div class="input-group"><label>Nama Sekolah</label><input type="text" id="ilaSekolah" oninput="saveData('ila')" value="SMP ABBS Surakarta"></div>
-                <div class="input-group"><label>Tanggal Rapor</label><input type="text" id="ilaTgl" oninput="saveData('ila')" value="Surakarta, 20 December 2025"></div>
+                <div class="input-group"><label>Sekolah</label><input type="text" id="ilaSekolah" oninput="saveData('ila')" value="SMP ABBS Surakarta"></div>
+                <div class="input-group"><label>Tanggal</label><input type="text" id="ilaTgl" oninput="saveData('ila')" value="Surakarta, 20 December 2025"></div>
                 <div class="input-group"><label>Wali Kelas</label><input type="text" id="ilaWali" oninput="saveData('ila')" value="Febriyono S. Pd, M.Bg"></div>
+                <div class="input-group"><label>Kelas</label><input type="text" id="ilaKelas"></div>
             </fieldset>
-
+            <fieldset>
+                <legend class="leg-ila">✍️ Tanda Tangan</legend>
+                <div class="input-group"><label>Upload PNG</label><input type="file" id="sigFileILA" accept="image/png, image/jpeg"></div>
+                <div class="ttd-controls"><button class="mini-btn" onclick="clearSig('ila')">❌ Hapus</button><button class="mini-btn" onclick="resetSigPos('ila')">📍 Reset</button></div>
+            </fieldset>
             <div id="progILA" class="progress-container">
                 <div class="progress-bar"><div class="progress-fill" id="fillILA"></div></div>
                 <div class="progress-text" id="txtILA">Processing...</div>
             </div>
-
             <button class="action-btn bg-blue" onclick="processPreview('ila')">👁️ Tampilkan Preview</button>
             <button class="action-btn bg-green" onclick="generateBatchPDF('ila')">📄 Download 1 Kelas (PDF)</button>
             <button class="action-btn bg-orange" onclick="generateBatchZIP('ila')">📦 Download Per Siswa (ZIP)</button>
         </div>
-
         <div class="main-wrapper">
             <div class="preview-toolbar">
                 <div class="toolbar-left"><button class="toggle-btn" onclick="toggleSidebar('ila')">☰</button><span style="font-weight:bold; font-size:14px; margin-left:10px;">Preview: ILA</span></div>
@@ -270,16 +281,107 @@
     <div id="hidden-processing"></div>
 
     <script>
-        // DATA ILA (Structure remains same)
-        const ilaStructure = [
-            { dim: "1. Self Discipline", vals: [ { name: "1.1. Independence", cats: [ { code: "1.1.1", title: "Independence in Self-Care", inds: [{c:"1.1.1.1",t:"Students demonstrate initiative in waking up early, grooming themselves, and regularly cleaning their nails and hair independently."},{c:"1.1.1.2",t:"Students can independently perform a major bath/ablution (for boys) and clean/dispose of sanitary pads properly (for girls)."},{c:"1.1.1.3",t:"Students show initiative in maintaining their own health by exercising routinely and managing their dietary intake."}] }, { code: "1.1.2", title: "Independence in Learning", inds: [{c:"1.1.2.1",t:"Independently preparing and bringing appropriate school supplies."},{c:"1.1.2.2",t:"Entering class on time and completing all assignments given by the teacher."},{c:"1.1.2.3",t:"Studying at home to prepare specifically for upcoming material and completing homework for the following day."}] }, { code: "1.1.3", title: "Social and Emotional Independence", inds: [{c:"1.1.3.1",t:"Students can form friendships with people from diverse backgrounds without discriminating."},{c:"1.1.3.2",t:"Students are able to manage their emotions during social interactions and understand the circumstances of others."},{c:"1.1.3.3",t:"Students can resolve conflicts with peers and express their wishes/needs appropriately to their friends."},{c:"1.1.3.4",t:"Students can collaborate with anyone and do not avoid or exclude specific peers."}] }, { code: "1.1.4", title: "Independence in Decision Making and Problem Solving", inds: [{c:"1.1.4.1",t:"Students can make decisions regarding the selection of extracurricular activities or organizations they want to join."},{c:"1.1.4.2",t:"Students can make decisions in determining their priority scale."},{c:"1.1.4.3",t:"Students are able to find solutions to problems faced in the school environment (e.g. conflicting schedules)."}] } ] }, { name: "1.2. Confidence", cats: [ { code: "1.1.5", title: "Confidence", inds: [{c:"1.1.5.1",t:"Dare to express opinions in public."},{c:"1.1.5.2",t:"Dare to ask questions or answer questions from the teacher."},{c:"1.1.5.3",t:"Dare to perform in front of the class or in public."}] } ] }, { name: "1.3. Resilience", cats: [ { code: "1.1.6", title: "Resilience and Work Ethic", inds: [{c:"1.1.6.1",t:"Not giving up easily when facing difficulties in learning or other activities."},{c:"1.1.6.2",t:"Trying hard to achieve the best results."}] } ] }, { name: "1.4. Social Awareness", cats: [ { code: "1.2.1", title: "Social Awareness", inds: [{c:"1.2.1.1",t:"Students show empathy towards friends who are in trouble or need help."},{c:"1.2.1.2",t:"Students appreciate the opinions and views of others."},{c:"1.2.1.3",t:"Students maintain the cleanliness of the shared environment and take care of shared property/assets."}] }, { code: "1.2.2", title: "Communication Skill", inds: [{c:"1.2.2.1",t:"Students use polite and courteous language when communicating with teachers and friends."},{c:"1.2.2.2",t:"Students listen well when others are speaking."},{c:"1.2.2.3",t:"Students express opinions clearly and easy to understand."}] } ] }, { name: "1.5. Adaptability", cats: [ { code: "1.3.1", title: "Adaptability", inds: [{c:"1.3.1.1",t:"Students can adapt to new environments and new friends."},{c:"1.3.1.2",t:"Students can accept changes in schedules or plans well."}] } ] }, { name: "1.6. Self-Management", cats: [ { code: "1.3.2", title: "Self-Management", inds: [{c:"1.3.2.1",t:"Students can manage time effectively between studying, playing, and resting."},{c:"1.3.2.2",t:"Students can control emotions when angry or disappointed."}] } ] }, { name: "1.7. Academic Integrity", cats: [ { code: "1.3.3", title: "Academic Integrity", inds: [{c:"1.3.3.1",t:"Students do exams honestly and do not cheat."},{c:"1.3.3.2",t:"Students complete assignments with their own efforts."},{c:"1.3.3.3",t:"Students admit mistakes and apologize."}] } ] }, { name: "1.8. Responsible Decision Making", cats: [ { code: "1.3.4", title: "Responsible Decision Making", inds: [{c:"1.3.4.1",t:"Students consider the consequences before doing something."},{c:"1.3.4.2",t:"Students are responsible for the decisions they have made."}] } ] }, { name: "1.9. Respect for Diversity", cats: [ { code: "1.4.1", title: "Respect for Diversity", inds: [{c:"1.4.1.1",t:"Students respect friends of different religions, races, and ethnicities."},{c:"1.4.1.2",t:"Students do not discriminate against friends based on physical or social background."}] } ] } ] },
-            { dim: "2. Social Concern", vals: [ { name: "2.1. Tolerance", cats: [ { code: "2.3.1", title: "Tolerance", inds: [{c:"2.3.1.1",t:"Students are willing to be friends with everyone, recognizing and understanding physical differences, hobbies, and cultures of other friends."},{c:"2.3.1.2",t:"Avoid and strictly do not commit bullying by not mocking, oppressing, or making friends feel intimidated."}] }, { code: "2.3.2", title: "Value other people's feelings", inds: [{c:"2.3.2.1",t:"Students give attention to their friends, listen to advice, and behave well towards others."}] } ] }, { name: "2.2. Empathy", cats: [ { code: "2.4.1", title: "Students show caring behavior", inds: [{c:"2.4.1.1",t:"Students remain silent and listen to other friends who are presenting or speaking."},{c:"2.4.1.2",t:"Students offer help when someone is in trouble."},{c:"2.4.1.3",t:"Lending stationery to friends who did not bring theirs."},{c:"2.4.1.4",t:"Sharing food or drink with friends in need."}] }, { code: "2.4.2", title: "Concern and share", inds: [{c:"2.4.2.1",t:"Students visit sick friends and bring gifts."},{c:"2.4.2.2",t:"Expressing condolences and paying respects (Takziah) when a friend's family member or neighbor passes away."}] }, { code: "2.4.3", title: "Listening and providing support", inds: [{c:"2.4.3.1",t:"Encourage friends who are sad because of bad grades or failure, for example by inviting them to study together."},{c:"2.4.3.2",t:"Comforting friends who are grieving or sad."}] } ] } ] }
+        // ==========================================
+        //  STRUKTUR ILA YANG BENAR (DARI ILA FIX)
+        // ==========================================
+        const ilaStructure = [ 
+            { 
+                dim: "1. Self Discipline", 
+                vals: [ 
+                    { 
+                        name: "Independence", 
+                        cats: [ 
+                            { code: "1.1.1", title: "Independence in Self-Care", inds: [{c:"1.1.1.1",t:"Students demonstrate initiative in waking up early, grooming themselves, and regularly cleaning their nails and hair independently."},{c:"1.1.1.2",t:"Students can independently perform a major bath/ablution (for boys) and clean/dispose of sanitary pads properly (for girls)."},{c:"1.1.1.3",t:"Students show initiative in maintaining their own health by exercising routinely and managing their dietary intake."}] }, 
+                            { code: "1.1.2", title: "Independence in Learning", inds: [{c:"1.1.2.1",t:"Independently preparing and bringing appropriate school supplies."},{c:"1.1.2.2",t:"Entering class on time and completing all assignments given by the teacher."},{c:"1.1.2.3",t:"Studying at home to prepare specifically for upcoming material and completing homework for the following day."}] }, 
+                            { code: "1.1.3", title: "Social and Emotional Independence", inds: [{c:"1.1.3.1",t:"Students can form friendships with people from diverse backgrounds without discriminating."},{c:"1.1.3.2",t:"Students are able to manage their emotions during social interactions and understand the circumstances of others."},{c:"1.1.3.3",t:"Students can resolve conflicts with peers and express their wishes/needs appropriately to their friends."},{c:"1.1.3.4",t:"Students can collaborate with anyone and do not avoid or exclude specific peers."}] }, 
+                            { code: "1.1.4", title: "Independence in Decision Making and Problem Solving", inds: [{c:"1.1.4.1",t:"Capable of making decisions aligned with their own interests and potential, particularly when selecting extracurricular activities and organizations."},{c:"1.1.4.2",t:"Have the courage to say \"no\" when asked to do something uncomfortable or wrong."},{c:"1.1.4.3",t:"Determine activity priorities (e.g., finishing assignments before playing games)."}] },
+                            { code: "1.1.5", title: "Independence in Worship (Spiritual Independence)", inds: [{c:"1.1.5.1",t:"Students consciously perform the 5 obligatory prayers and Sunnah prayers in accordance with Islamic law (Fiqh)."},{c:"1.1.5.2",t:"Students demonstrate proper etiquette (adab) in places of worship and are able to maintain their cleanliness."},{c:"1.1.5.3",t:"Students are disciplined in making obligatory and Sunnah worship a priority over other activities."}] },
+                            { code: "1.1.6", title: "Financial Independence", inds: [{c:"1.1.6.1",t:"Students are able to practice self-control and manage their allowance/pocket money effectively."},{c:"1.1.6.2",t:"Students understand the concept of Sadaqah/Infaq (charity) as part of financial obligations in Islam."}] }
+                        ] 
+                    }, 
+                    { 
+                        name: "Disclipine", 
+                        cats: [ 
+                            { code: "1.2.1", title: "Students are able to follow class and school rules", inds: [{c:"1.2.1.1",t:"Students arrive at school on time wearing a complete and neat uniform."},{c:"1.2.1.2",t:"Students arrive on time for worship sessions and other school activities."},{c:"1.2.1.3",t:"Students are supportive and participate actively in tasks and directions given by teachers."}] }, 
+                            { code: "1.2.2", title: "Siswa mampu mengikuti aturan di rumah", inds: [{c:"1.2.2.1",t:"Students supportively perform daily tasks such as studying at home, reciting the Quran (Mengaji), preparing for school, etc."},{c:"1.2.2.2",t:"Students are disciplined regarding worship times, screen time limits, dress codes, and rules for going out as established by parents at home."},{c:"1.2.2.3",t:"Students behave respectfully toward parents and siblings, and assist their parents at home."}] } 
+                        ] 
+                    }, 
+                    { 
+                        name: "Honest", 
+                        cats: [ 
+                            { code: "1.3.1", title: "Students are able to convey the truth", inds: [{c:"1.3.1.1",t:"Students speak honestly and have the courage to speak the truth when a friend behaves badly."},{c:"1.3.1.2",t:"Students have the courage to reprimand other students who commit mistakes."}] },
+                            { code: "1.3.2", title: "Students are able to admit mistakes", inds: [{c:"1.3.2.1",t:"Students have the courage to admit their mistakes and apologize."},{c:"1.3.2.2",t:"Students do not blame others for their own mistakes."}] },
+                            { code: "1.3.3", title: "Students do not steal or take others' belongings", inds: [{c:"1.3.3.1",t:"Students ask for permission when borrowing items."},{c:"1.3.3.2",t:"Do not take others' rights, whether in the form of goods or creative work."},{c:"1.3.3.3",t:"Returning items that do not belong to them to the owner (when finding something)."}] },
+                            { code: "1.3.4", title: "Students are honest in completing assignments and exams", inds: [{c:"1.3.4.1",t:"Students complete assignments and exams using their own abilities and do not cheat, such as asking for or giving answers to others."},{c:"1.3.4.2",t:"Using time according to the purpose; not pretending to study or work."}] }
+                        ] 
+                    }, 
+                    { 
+                        name: "Patient", 
+                        cats: [ 
+                            { code: "1.4.1", title: "Patience in academic matters", inds: [{c:"1.4.1.1",t:"Patient in carrying out tasks, increasing memorization, and receiving lessons from teachers."}] }, 
+                            { code: "1.4.2", title: "Patience in non-academic matters", inds: [{c:"1.4.2.1",t:"Patient in friendship; patient with circumstances that do not meet expectations."},{c:"1.4.2.2",t:"Patient in waiting in line (queuing)."},{c:"1.4.2.3",t:"Patient in accepting input or advice from others."}] } 
+                        ] 
+                    } 
+                ] 
+            }, 
+            { 
+                dim: "2. Respect", 
+                vals: [ 
+                    { 
+                        name: "Politeness", 
+                        cats: [ 
+                            { code: "2.1.1", title: "Students are able to use polite words", inds: [{c:"2.1.1.1",t:"Students speak politely to anyone (applying the 3 S: Senyum (smile), Sapa (greet), Salam (peace), and the 4 magic words: sorry, excuse me, please, thank you)."}] }, 
+                            { code: "2.1.2", title: "Students are able to respect others", inds: [{c:"2.1.2.1",t:"Students pay attention and listen carefully when others are speaking."},{c:"2.1.2.2",t:"Students pay attention to the teacher's explanation and do not talk amongst themselves."}] },
+                            { code: "2.1.3", title: "Students are able to use polite body language", inds: [{c:"2.1.3.1",t:"Students shake hands with people they meet or bow slightly politely when passing in front of others."}] }
+                        ] 
+                    }, 
+                    { 
+                        name: "Social Care", 
+                        cats: [ 
+                            { code: "2.2.1", title: "Willingness to Help Others / Social Solidarity", inds: [{c:"2.2.1.1",t:"Students are always willing to lend a hand/help friends in need."}] }, 
+                            { code: "2.2.2", title: "Active Participation in Social Activities / Communal Concern", inds: [{c:"2.2.2.1",t:"Students participate in social activities in the community around their home or school."}] }, 
+                            { code: "2.2.3", title: "Responsibility towards Environment and Public Facilities", inds: [{c:"2.2.3.1",t:"Students maintain the cleanliness of the shared environment and take care of shared property/assets."}] } 
+                        ] 
+                    }, 
+                    { 
+                        name: "Tolerance", 
+                        cats: [ 
+                            { code: "2.3.1", title: "Students are able to appreciate differences", inds: [{c:"2.3.1.1",t:"Students are willing to be friends with everyone, recognizing and understanding physical differences, hobbies, and cultures of other friends."},{c:"2.3.1.2",t:"Avoid and strictly do not commit bullying by not mocking, oppressing, or making friends feel intimidated."}] }, 
+                            { code: "2.3.2", title: "Students value other people's feelings", inds: [{c:"2.3.2.1",t:"Students give attention to their friends, listen to advice, and behave well towards others."}] } 
+                        ] 
+                    }, 
+                    { 
+                        name: "Emphaty", 
+                        cats: [ 
+                            { code: "2.4.1", title: "Students show caring behavior", inds: [{c:"2.4.1.1",t:"Students remain silent and listen to other friends who are presenting or speaking."},{c:"2.4.1.2",t:"Students offer help when someone is in trouble."},{c:"2.4.1.3",t:"Lending stationery to friends who did not bring theirs."},{c:"2.4.1.4",t:"Sharing food or drink with friends in need."}] }, 
+                            { code: "2.4.2", title: "Students show concern and share in others' happiness or sadness", inds: [{c:"2.4.2.1",t:"Students visit sick friends and bring gifts."},{c:"2.4.2.2",t:"Expressing condolences and paying respects (Takziah) when a friend's family member or neighbor passes away."}] }, 
+                            { code: "2.4.3", title: "Listening and providing support", inds: [{c:"2.4.3.1",t:"Encourage friends who are sad because of bad grades or failure, for example by inviting them to study together."},{c:"2.4.3.2",t:"Comforting friends who are grieving or sad."}] } 
+                        ] 
+                    } 
+                ] 
+            } 
         ];
 
+        const gradingDesc = {
+            "5": "Students consistently demonstrate the expected character behavior, often exceeding expectations and inspiring others to behave similarly.",
+            "4": "Students consistently or often demonstrate the expected character behavior in various relevant situations.",
+            "3": "Students are starting to demonstrate the expected character behavior, but not yet consistent and still require guidance or support in some situations.",
+            "2": "Students show few signs of the expected character behavior and require significant guidance as well as intensive intervention.",
+            "1": "Students have not yet demonstrated the expected character behavior or show significantly contradictory behavior."
+        };
+
+        // --- GLOBAL STATE ---
         let wbDinas = null, wbILA = null;
         let globalDataDinas = [], globalDataILA = [];
         let viewMode = { dinas: 'all', ila: 'all' };
         let studentIndex = { dinas: 0, ila: 0 };
+        const LS_KEY = 'rapor_abbs_v80';
+        let sigData = { dinas: { img: null, x: 0, y: 0 }, ila: { img: null, x: 0, y: 0 } };
+
+        // --- UTILS ---
+        const safeVal = (v) => (v === undefined || v === null || v === '') ? '-' : v;
+        function sanitizeFilename(name) { return name.replace(/[^a-z0-9 ]/gi, '').trim().replace(/\s+/g, '_'); }
+        function toTitleCase(str) { return str ? str.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : ""; }
 
         function switchApp(app) {
             document.getElementById('landing-page').style.display = 'none';
@@ -292,117 +394,86 @@
             document.getElementById('app-ila').style.display = 'none';
         }
         function toggleSidebar(app) { document.getElementById('sidebar-' + app).classList.toggle('closed'); }
-
-        document.getElementById('fileDinas').addEventListener('change', (e) => handleUpload(e, 'dinas'));
-        document.getElementById('fileILA').addEventListener('change', (e) => handleUpload(e, 'ila'));
-
-        function handleUpload(e, type) {
-            const file = e.target.files[0];
-            if(!file) return;
-
-            // ANIMASI UPLOAD: Tampilkan SweetAlert Loading
-            let timerInterval;
-            Swal.fire({
-                title: 'Sedang Membaca File...',
-                html: 'Mohon tunggu, memproses data.',
-                timer: 1000, // Minimal 1 detik agar animasi terlihat
-                timerProgressBar: true,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            }).then((result) => {
-                // Proses baca file dilakukan setelah UI loading tampil
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    try {
-                        const data = new Uint8Array(evt.target.result);
-                        const wb = XLSX.read(data, {type:'array'});
-                        if(type === 'dinas') wbDinas = wb; else wbILA = wb;
-                        
-                        const sel = document.getElementById(type === 'dinas' ? 'sheetDinas' : 'sheetILA');
-                        sel.innerHTML = "";
-                        wb.SheetNames.forEach(n => {
-                            const opt = document.createElement('option');
-                            opt.value = n; opt.textContent = n;
-                            sel.appendChild(opt);
-                        });
-                        sel.disabled = false;
-                        autoFillClass(type);
-
-                        // NOTIFIKASI SUKSES (SweetAlert)
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil!',
-                            text: 'File leger berhasil dimuat.',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-
-                    } catch (err) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal Membaca',
-                            text: 'Format file mungkin salah atau rusak.'
-                        });
-                        console.error(err);
-                    }
-                };
-                reader.readAsArrayBuffer(file);
+        function resetApp() {
+            Swal.fire({ title: 'Reset Data?', icon: 'warning', showCancelButton: true }).then((result) => {
+                if (result.isConfirmed) { localStorage.removeItem(LS_KEY); location.reload(); }
             });
         }
 
-        function autoFillClass(type) {
-            const sel = document.getElementById(type==='dinas'?'sheetDinas':'sheetILA').value;
-            const inp = document.getElementById(type==='dinas'?'dinasKelas':'ilaKelas');
-            const match = sel.match(/([789][A-Z])/i);
-            inp.value = match ? match[0].toUpperCase() : sel;
+        // --- UPLOAD HANDLERS ---
+        function handleUpload(e, type) {
+            const file = e.target.files[0];
+            if (!file) return;
+            Swal.fire({ title: 'Membaca File...', didOpen: () => { Swal.showLoading(); } });
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const wb = XLSX.read(data, {type:'array'});
+                    if(type === 'dinas') wbDinas = wb; else wbILA = wb;
+                    const sel = document.getElementById(type === 'dinas' ? 'sheetDinas' : 'sheetILA');
+                    sel.innerHTML = "";
+                    wb.SheetNames.forEach(n => { const opt = document.createElement('option'); opt.value = n; opt.textContent = n; sel.appendChild(opt); });
+                    sel.disabled = false;
+                    autoFillClass(type);
+                    Swal.fire({ icon: 'success', title: 'Berhasil!', timer: 1500, showConfirmButton: false });
+                } catch (err) { Swal.fire('Error', 'Gagal membaca file.', 'error'); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        document.getElementById('fileDinas').addEventListener('change', (e) => handleUpload(e, 'dinas'));
+        document.getElementById('fileILA').addEventListener('change', (e) => handleUpload(e, 'ila'));
+
+        function handleSigUpload(e, type) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => { sigData[type].img = evt.target.result; saveData(type); processPreview(type); };
+            reader.readAsDataURL(file);
+        }
+        document.getElementById('sigFileDinas').addEventListener('change', (e) => handleSigUpload(e, 'dinas'));
+        document.getElementById('sigFileILA').addEventListener('change', (e) => handleSigUpload(e, 'ila'));
+
+        function clearSig(type) { sigData[type].img = null; saveData(type); processPreview(type); }
+        function resetSigPos(type) { sigData[type].x = 0; sigData[type].y = 0; saveData(type); processPreview(type); }
+
+        // --- PERSISTENCE ---
+        function saveData(type) {
+            let cur = JSON.parse(localStorage.getItem(LS_KEY)) || {};
+            if (!cur.dinas) cur.dinas = {}; if (!cur.ila) cur.ila = {};
+            if (type === 'dinas') {
+                ['sekolah', 'alamat', 'kepsek', 'kelas', 'fase', 'sem', 'thn', 'tgl', 'wali', 'nip'].forEach(k => {
+                    const el = document.getElementById('dinas' + toTitleCase(k));
+                    if (el) cur.dinas[k] = el.value;
+                });
+            } else {
+                ['sekolah', 'tgl', 'wali', 'kelas'].forEach(k => {
+                    const el = document.getElementById('ila' + toTitleCase(k));
+                    if (el) cur.ila[k] = el.value;
+                });
+            }
+            cur.sigData = sigData;
+            localStorage.setItem(LS_KEY, JSON.stringify(cur));
         }
 
-        function saveData(type) {
-            const data = {
-                dinas: {
-                    sekolah: document.getElementById('dinasSekolah').value,
-                    alamat: document.getElementById('dinasAlamat').value,
-                    kepsek: document.getElementById('dinasKepsek').value,
-                    fase: document.getElementById('dinasFase').value,
-                    sem: document.getElementById('dinasSem').value,
-                    thn: document.getElementById('dinasThn').value,
-                    tgl: document.getElementById('dinasTgl').value,
-                    wali: document.getElementById('dinasWali').value,
-                    nip: document.getElementById('dinasNIP').value
-                },
-                ila: {
-                    sekolah: document.getElementById('ilaSekolah').value,
-                    tgl: document.getElementById('ilaTgl').value,
-                    wali: document.getElementById('ilaWali').value
-                }
-            };
-            localStorage.setItem('rapor_abbs_v58', JSON.stringify(data));
+        function autoFillClass(type) {
+            const sel = document.getElementById(type === 'dinas' ? 'sheetDinas' : 'sheetILA').value;
+            const match = sel.match(/([789][A-Z])/i);
+            const val = match ? match[0].toUpperCase() : sel;
+            document.getElementById(type === 'dinas' ? 'dinasKelas' : 'ilaKelas').value = val;
+            saveData(type);
         }
 
         window.onload = function() {
-            const saved = localStorage.getItem('rapor_abbs_v58');
+            const saved = JSON.parse(localStorage.getItem(LS_KEY));
             if(saved) {
-                const d = JSON.parse(saved);
-                if(d.dinas) {
-                    document.getElementById('dinasSekolah').value = d.dinas.sekolah || '';
-                    document.getElementById('dinasAlamat').value = d.dinas.alamat || '';
-                    document.getElementById('dinasKepsek').value = d.dinas.kepsek || '';
-                    document.getElementById('dinasFase').value = d.dinas.fase || '';
-                    document.getElementById('dinasSem').value = d.dinas.sem || '';
-                    document.getElementById('dinasThn').value = d.dinas.thn || '';
-                    document.getElementById('dinasTgl').value = d.dinas.tgl || '';
-                    document.getElementById('dinasWali').value = d.dinas.wali || '';
-                    document.getElementById('dinasNIP').value = d.dinas.nip || '';
-                }
-                if(d.ila) {
-                    document.getElementById('ilaSekolah').value = d.ila.sekolah || '';
-                    document.getElementById('ilaTgl').value = d.ila.tgl || '';
-                    document.getElementById('ilaWali').value = d.ila.wali || '';
-                }
+                if (saved.sigData) sigData = saved.sigData;
+                if(saved.dinas) Object.keys(saved.dinas).forEach(k => { const el = document.getElementById('dinas' + toTitleCase(k)); if(el) el.value = saved.dinas[k]; });
+                if(saved.ila) Object.keys(saved.ila).forEach(k => { const el = document.getElementById('ila' + toTitleCase(k)); if(el) el.value = saved.ila[k]; });
             }
         };
 
+        // --- PREVIEW RENDER ---
         function getDataAndConf(type) {
             const wb = type === 'dinas' ? wbDinas : wbILA;
             if(!wb) return null;
@@ -433,7 +504,6 @@
             return {data, conf};
         }
 
-        // --- PREVIEW ---
         function processPreview(type) {
             const res = getDataAndConf(type);
             if(!res) { Swal.fire('Oops...', 'Silakan upload file leger terlebih dahulu!', 'warning'); return; }
@@ -448,10 +518,12 @@
                 selector.appendChild(opt);
             });
             studentIndex[type] = 0; 
-            renderUI(type, res.data, res.conf);
+            renderUI(type);
         }
 
-        function renderUI(type, data, conf) {
+        function renderUI(type) {
+            const res = getDataAndConf(type);
+            if(!res) return;
             const out = document.getElementById(type === 'dinas' ? 'outputDinas' : 'outputILA');
             out.innerHTML = "";
             const hiddenProc = document.getElementById('hidden-processing');
@@ -461,14 +533,14 @@
             const idx = studentIndex[type];
 
             if (mode === 'all') {
-                data.forEach(siswa => {
-                    const pages = (type === 'dinas') ? generateDinasPages(siswa, conf, hiddenProc) : generateILAPages(siswa, conf);
+                res.data.forEach(siswa => {
+                    const pages = (type === 'dinas') ? generateDinasPages(siswa, res.conf, hiddenProc) : generateILAPages(siswa, res.conf);
                     pages.forEach(p => out.appendChild(p));
                 });
             } else {
-                const siswa = data[idx];
+                const siswa = res.data[idx];
                 document.getElementById(type === 'dinas' ? 'studentSelectorDinas' : 'studentSelectorILA').value = idx;
-                const pages = (type === 'dinas') ? generateDinasPages(siswa, conf, hiddenProc) : generateILAPages(siswa, conf);
+                const pages = (type === 'dinas') ? generateDinasPages(siswa, res.conf, hiddenProc) : generateILAPages(siswa, res.conf);
                 pages.forEach(p => out.appendChild(p));
             }
             hiddenProc.innerHTML = '';
@@ -485,7 +557,7 @@
             navControl.style.display = mode === 'single' ? 'flex' : 'none';
             
             const res = getDataAndConf(type);
-            if(res) renderUI(type, res.data, res.conf);
+            if(res) renderUI(type);
         }
 
         function changeStudent(dir, type) {
@@ -494,169 +566,23 @@
             if(newIndex >= 0 && newIndex < data.length) {
                 studentIndex[type] = newIndex;
                 const res = getDataAndConf(type);
-                if(res) renderUI(type, res.data, res.conf);
+                if(res) renderUI(type);
             }
         }
         function jumpToStudent(type) {
             const selId = type === 'dinas' ? 'studentSelectorDinas' : 'studentSelectorILA';
             studentIndex[type] = parseInt(document.getElementById(selId).value);
             const res = getDataAndConf(type);
-            if(res) renderUI(type, res.data, res.conf);
+            if(res) renderUI(type);
         }
 
         // ==========================================
-        //  CORE ENGINE: DOM -> CANVAS -> PDF
+        //  FUNGSI GENERATOR DINAS (DARI DINAS FIX)
         // ==========================================
-        
-        async function elementToImage(element) {
-            const canvas = await html2canvas(element, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                windowWidth: 210 * 3.7795275591, 
-                windowHeight: 297 * 3.7795275591
-            });
-            return canvas.toDataURL('image/jpeg', 0.9);
-        }
-
-        // --- BATCH PDF DOWNLOAD ---
-        async function generateBatchPDF(type) {
-            const res = getDataAndConf(type);
-            if(!res) { Swal.fire('Oops...', 'Upload file dulu!', 'warning'); return; }
-            
-            const btn = type === 'dinas' ? document.querySelector('#app-dinas .bg-green') : document.querySelector('#app-ila .bg-green');
-            const progDiv = document.getElementById(type === 'dinas' ? 'progDinas' : 'progILA');
-            const progFill = document.getElementById(type === 'dinas' ? 'fillDinas' : 'fillILA');
-            const progText = document.getElementById(type === 'dinas' ? 'txtDinas' : 'txtILA');
-            const hiddenDiv = document.getElementById('hidden-processing');
-            
-            btn.disabled = true; progDiv.style.display = 'block';
-
-            try {
-                const pdfDoc = await PDFLib.PDFDocument.create();
-                const total = res.data.length;
-                const A4_W = 595.28;
-                const A4_H = 841.89;
-
-                for (let i = 0; i < total; i++) {
-                    const siswa = res.data[i];
-                    
-                    const pct = Math.round(((i+1)/total)*100);
-                    progFill.style.width = pct + "%";
-                    progText.innerText = `Mengonversi Data Siswa: ${i+1}/${total} (${siswa.Nama || siswa['Nama Siswa']})`;
-                    await new Promise(r => setTimeout(r, 10)); 
-
-                    hiddenDiv.innerHTML = '';
-                    const pages = (type === 'dinas') 
-                        ? generateDinasPages(siswa, res.conf, hiddenDiv) 
-                        : generateILAPages(siswa, res.conf);
-
-                    for (const pageEl of pages) {
-                        const textContent = pageEl.innerText.trim();
-                        const hasImages = pageEl.querySelectorAll('img').length > 0;
-                        const hasTables = pageEl.querySelectorAll('table').length > 0;
-                        
-                        if (textContent.length < 5 && !hasImages && !hasTables) continue;
-
-                        hiddenDiv.innerHTML = '';
-                        hiddenDiv.appendChild(pageEl);
-
-                        const imgData = await elementToImage(pageEl);
-                        const img = await pdfDoc.embedJpg(imgData);
-                        const page = pdfDoc.addPage([A4_W, A4_H]);
-                        page.drawImage(img, { x: 0, y: 0, width: A4_W, height: A4_H });
-                    }
-                }
-
-                progText.innerText = "Menyimpan File PDF...";
-                const pdfBytes = await pdfDoc.save();
-                const blob = new Blob([pdfBytes], { type: "application/pdf" });
-                saveAs(blob, `Rapor ${type.toUpperCase()} ${res.conf.kelas}.pdf`);
-                
-                Swal.fire({ icon: 'success', title: 'Selesai!', text: 'File PDF berhasil diunduh.', timer: 2000 });
-
-            } catch (err) {
-                console.error(err);
-                Swal.fire({ icon: 'error', title: 'Terjadi Kesalahan', text: err.message });
-            } finally {
-                hiddenDiv.innerHTML = '';
-                btn.disabled = false; progDiv.style.display = 'none';
-            }
-        }
-
-        // --- BATCH ZIP DOWNLOAD ---
-        async function generateBatchZIP(type) {
-            const res = getDataAndConf(type);
-            if(!res) { Swal.fire('Oops...', 'Upload file dulu!', 'warning'); return; }
-
-            const btn = type === 'dinas' ? document.querySelector('#app-dinas .bg-orange') : document.querySelector('#app-ila .bg-orange');
-            const progDiv = document.getElementById(type === 'dinas' ? 'progDinas' : 'progILA');
-            const progFill = document.getElementById(type === 'dinas' ? 'fillDinas' : 'fillILA');
-            const progText = document.getElementById(type === 'dinas' ? 'txtDinas' : 'txtILA');
-            const hiddenDiv = document.getElementById('hidden-processing');
-            
-            btn.disabled = true; progDiv.style.display = 'block';
-
-            const zip = new JSZip();
-            const total = res.data.length;
-            const A4_W = 595.28;
-            const A4_H = 841.89;
-
-            try {
-                for (let i = 0; i < total; i++) {
-                    const siswa = res.data[i];
-                    const name = siswa.Nama || siswa['Nama Siswa'];
-                    const no = siswa['No'] || (i+1);
-                    
-                    progFill.style.width = Math.round(((i+1)/total)*100) + "%";
-                    progText.innerText = `Memproses ZIP: ${name} (${i+1}/${total})`;
-                    await new Promise(r => setTimeout(r, 10));
-
-                    const pdfDoc = await PDFLib.PDFDocument.create();
-                    hiddenDiv.innerHTML = '';
-                    const pages = (type === 'dinas') 
-                        ? generateDinasPages(siswa, res.conf, hiddenDiv) 
-                        : generateILAPages(siswa, res.conf);
-
-                    for (const pageEl of pages) {
-                        const textContent = pageEl.innerText.trim();
-                        const hasImages = pageEl.querySelectorAll('img').length > 0;
-                        const hasTables = pageEl.querySelectorAll('table').length > 0;
-                        if (textContent.length < 5 && !hasImages && !hasTables) continue;
-
-                        hiddenDiv.innerHTML = '';
-                        hiddenDiv.appendChild(pageEl);
-
-                        const imgData = await elementToImage(pageEl);
-                        const img = await pdfDoc.embedJpg(imgData);
-                        const page = pdfDoc.addPage([A4_W, A4_H]);
-                        page.drawImage(img, { x: 0, y: 0, width: A4_W, height: A4_H });
-                    }
-
-                    const pdfBytes = await pdfDoc.save();
-                    zip.file(`${no} ${type.toUpperCase()} ${name}.pdf`, pdfBytes);
-                }
-
-                progText.innerText = "Mengompres ZIP...";
-                const content = await zip.generateAsync({type:"blob"});
-                saveAs(content, `Rapor ${type.toUpperCase()} ${res.conf.kelas} Per Siswa.zip`);
-                Swal.fire({ icon: 'success', title: 'Selesai!', text: 'File ZIP berhasil diunduh.', timer: 2000 });
-
-            } catch (err) {
-                console.error(err);
-                Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
-            } finally {
-                hiddenDiv.innerHTML = '';
-                btn.disabled = false; progDiv.style.display = 'none';
-            }
-        }
-
-        // --- PAGE GENERATORS ---
-
         function generateDinasPages(siswa, conf, measureContainer) {
             let pageNum = 1;
             const pages = [];
-            const row = (n,m,v,d) => `<tr><td class="cell-center">${n}</td><td class="cell-left">${m}</td><td class="cell-center bold">${v||''}</td><td class="cell-justify" style="font-size:10pt;">${d||''}</td></tr>`;
+            const row = (n,m,v,d) => `<tr><td class="cell-center">${n}</td><td class="cell-left">${m}</td><td class="cell-center bold">${safeVal(v)}</td><td class="cell-justify" style="font-size:10pt;">${safeVal(d)}</td></tr>`;
             const sakit=siswa['SAKIT']||siswa['Sakit']||'-', izin=siswa['IJIN']||siswa['Ijin']||'-', alpha=siswa['TANPA KETERANGAN']||siswa['Tanpa Keterangan']||'-';
             
             const headerHTML = `<div class="header-container"><table class="dinas-header"><colgroup><col style="width:130px;"><col style="width:10px;"><col><col style="width:130px;"><col style="width:10px;"><col style="width:100px;"></colgroup><tr><td>Nama Peserta Didik</td><td>:</td><td>${toTitleCase(siswa.Nama)}</td><td>Kelas</td><td>:</td><td>${conf.kelas}</td></tr><tr><td>NIS / NISN</td><td>:</td><td>${siswa.NIS||'-'} / ${siswa.NISN||'-'}</td><td>Fase</td><td>:</td><td>${conf.fase}</td></tr><tr><td>Nama Sekolah</td><td>:</td><td>${conf.sekolah}</td><td>Semester</td><td>:</td><td>${conf.sem}</td></tr><tr><td>Alamat Sekolah</td><td>:</td><td style="font-size:11pt;">${conf.alamat}</td><td>Tahun Pelajaran</td><td>:</td><td>${conf.thn}</td></tr></table><div class="header-separator"></div></div>`;
@@ -729,71 +655,295 @@
             
             appendBlock(`
             <div class="signature-container">
-                <div class="signature-grid"><div class="sig-box"><p>Mengetahui,<br>Orang Tua/Wali</p><div class="space-sign"></div><p>(...................)</p></div><div class="sig-box"><p>${conf.tgl}<br>Wali Kelas,</p><div class="space-sign"></div><p><u><strong>${conf.wali}</strong></u><br>NIP. ${conf.nip}</p></div><div class="sig-box-center"><p>Mengetahui,<br>Kepala Sekolah</p><div class="space-sign"></div><p><u><strong>${conf.kepsek}</strong></u><br>NIP. -</p></div></div>
+                <div class="signature-grid">
+                    <div class="sig-box">
+                        <p>Mengetahui,<br>Orang Tua/Wali</p>
+                        <div class="space-sign"></div>
+                        <p>(...................)</p>
+                    </div>
+                    <div class="sig-box">
+                        <p>${conf.tgl}<br>Wali Kelas,</p>
+                        <div class="space-sign">${getSigHTML('dinas')}</div>
+                        <p><u><strong>${conf.wali}</strong></u><br>NIP. ${conf.nip}</p>
+                    </div>
+                    <div class="sig-box-center">
+                        <p>Mengetahui,<br>Kepala Sekolah</p>
+                        <div class="space-sign"></div>
+                        <p><u><strong>${conf.kepsek}</strong></u><br>NIP. -</p>
+                    </div>
+                </div>
             </div>`);
 
             pages.forEach((p, i) => { p.querySelector('.pg-num').innerText = `Halaman ${i + 1}`; });
             return pages;
         }
 
+        // ==========================================
+        //  FUNGSI GENERATOR ILA (DARI ILA FIX)
+        // ==========================================
+        function calculateValueAverage(siswa, valueObj) {
+            let total = 0, count = 0;
+            valueObj.cats.forEach(cat => cat.inds.forEach(ind => {
+                ['Siswa', 'Guru', 'Ortu'].forEach(p => {
+                    const v = parseFloat(getScore(siswa, p, ind.c)) || 0;
+                    if (v > 0) { total += v; count++; }
+                });
+            }));
+            return count === 0 ? 0 : (total / count).toFixed(2);
+        }
+
+        function getPredikatShort(avg) {
+            if (avg >= 4.5) return "HD"; if (avg >= 3.5) return "DSE"; if (avg >= 2.5) return "SD"; if (avg >= 1.5) return "DI"; return "NYD";
+        }
+
         function generateILAPages(siswa, conf) {
             const pages = [];
-            const dim1 = ilaStructure[0]; const dim2 = ilaStructure[1];
-            const p1Data = [dim1.vals[0]]; 
-            const p2Data = [dim1.vals[1], dim1.vals[2], dim1.vals[3], dim1.vals[4]];
-            const p3Data = [dim1.vals[5], dim1.vals[6], dim1.vals[7], dim1.vals[8]];
-            const p4Data = dim2.vals;
+            const dim1 = ilaStructure[0], dim2 = ilaStructure[1];
 
-            const headerHTML = `
-                <div class="ila-h1">International Leadership Al Abidin Report</div>
-                <div class="ila-info-container">
-                    <div class="ila-info-col"><table class="ila-info-table"><tr><td width="70">School</td><td width="10">:</td><td class="val">${conf.sekolah}</td></tr><tr><td>Number</td><td>:</td><td class="val">${siswa['No']||'-'}</td></tr></table></div>
-                    <div class="ila-info-col"><table class="ila-info-table"><tr><td width="70">Name</td><td width="10">:</td><td class="val">${toTitleCase(siswa['Nama Siswa'] || siswa.Nama)}</td></tr><tr><td>Class</td><td>:</td><td class="val">${conf.kelas}</td></tr></table></div>
-                </div>`;
-            const scoringCardHTML = `<div class="scoring-card"><div class="scoring-title">Grading Scale Description</div><div class="scoring-grid"><div class="score-box"><div class="sb-head">5</div><div class="sb-body"><span class="sb-label">Highly Developed (HD)</span> Students consistently demonstrate...</div></div><div class="score-box"><div class="sb-head">4</div><div class="sb-body"><span class="sb-label">Developed as Expected (DSE)</span> Students consistently or often demonstrate...</div></div><div class="score-box"><div class="sb-head">3</div><div class="sb-body"><span class="sb-label">Starting to Develop (SD)</span> Students are starting to demonstrate...</div></div><div class="score-box"><div class="sb-head">2</div><div class="sb-body"><span class="sb-label">Needs Improvement (DI)</span> Students show few signs...</div></div><div class="score-box"><div class="sb-head">1</div><div class="sb-body"><span class="sb-label">Not Yet Developed (NYD)</span> Students have not yet demonstrated...</div></div></div></div>`;
-            const getFooter = (p) => `<div class="dinas-footer"><span>${conf.kelas} | ${toTitleCase(siswa['Nama Siswa'] || siswa.Nama)} | ${siswa['No']||'-'}</span><span>Page ${p}</span></div>`;
+            const getHeader = () => `<div class="ila-h1">International Leadership Al Abidin Report</div><div class="ila-info-container"><div class="ila-info-col"><table class="ila-info-table"><tr><td width="70">School</td><td width="10">:</td><td class="val">${conf.sekolah}</td></tr><tr><td>Number</td><td>:</td><td class="val">${safeVal(siswa['No'])}</td></tr></table></div><div class="ila-info-col"><table class="ila-info-table"><tr><td width="70">Name</td><td width="10">:</td><td class="val">${toTitleCase(siswa['Nama Siswa'] || siswa.Nama)}</td></tr><tr><td>Class</td><td>:</td><td class="val">${conf.kelas}</td></tr></table></div></div>`;
+            const getFooter = (p) => `<div class="dinas-footer"><span>${conf.kelas} | ${toTitleCase(siswa['Nama Siswa'] || siswa.Nama)}</span><span>Page ${p}</span></div>`;
+            
+            const renderPartial = (val, start, end, showTitle = true) => {
+                let h = showTitle ? `<div class="ila-val-title">${val.name}</div>` : "";
+                h += `<div class="ila-table-container"><table class="ila-table"><thead><tr><th style="width:50%;">Indicator</th><th class="col-score">Parents</th><th class="col-score">School</th><th class="col-score">Student</th></tr></thead><tbody>`;
+                val.cats.slice(start, end).forEach(cat => {
+                    h += `<tr class="row-category"><td colspan="4">${cat.code} ${cat.title}</td></tr>`;
+                    cat.inds.forEach(ind => {
+                        h += `<tr><td class="indicator-text">${ind.c}. ${ind.t}</td><td class="col-score">${safeVal(getScore(siswa, 'Ortu', ind.c))}</td><td class="col-score">${safeVal(getScore(siswa, 'Guru', ind.c))}</td><td class="col-score">${safeVal(getScore(siswa, 'Siswa', ind.c))}</td></tr>`;
+                    });
+                });
+                return h + `</tbody></table></div>`;
+            };
 
-            const createPage = (num, content, includeScoring=false, dimTitle="", includeSig=false) => {
+            const createP = (n, content) => {
                 const d = document.createElement('div'); d.className = 'sheet sheet-ila';
-                let inner = headerHTML;
-                if(includeScoring) inner += scoringCardHTML;
-                if(dimTitle) inner += `<div class="ila-dim-title">${dimTitle}</div>`;
-                inner += content;
-                if(includeSig) {
-                    inner += `<div class="ila-sig-section"><div class="ila-sig-box"><p>${conf.tgl}<br>Homeroom Teacher</p><div class="space-sign" style="height:60px;"></div><p><u><strong>${conf.wali}</strong></u></p></div></div>`;
-                }
-                inner += '<div class="content-body"></div>' + getFooter(num);
-                d.innerHTML = inner;
+                d.innerHTML = getHeader() + content + '<div class="content-body"></div>' + getFooter(n);
                 return d;
             };
 
-            const renderVals = (vals) => {
-                let h = "";
-                vals.forEach(val => {
-                    h += `<div class="ila-val-title">${val.name}</div><div class="ila-table-container"><table class="ila-table"><thead><tr><th style="width:50%;">Indicator</th><th class="col-score">Parents</th><th class="col-score">School</th><th class="col-score">Student</th></tr></thead><tbody>`;
-                    val.cats.forEach(cat => {
-                        h += `<tr class="row-category"><td colspan="4">${cat.code} ${cat.title}</td></tr>`;
-                        cat.inds.forEach(ind => {
-                            let p=getScore(siswa,'Ortu',ind.c), g=getScore(siswa,'Guru',ind.c), s=getScore(siswa,'Siswa',ind.c);
-                            h += `<tr><td class="indicator-text">${ind.c}. ${ind.t}</td><td class="col-score">${p}</td><td class="col-score">${g}</td><td class="col-score">${s}</td></tr>`;
-                        });
-                    });
-                    h += `</tbody></table></div>`;
+            // HAL 1
+            const scoreCard = `<div class="scoring-card"><div class="scoring-title">Grading Scale Description</div><div class="scoring-grid">${[5,4,3,2,1].map(v=>`<div class="score-box"><div class="sb-head">${v}</div><div class="sb-body"><span class="sb-label">${getPredikatShort(v)}</span>${gradingDesc[v]}</div></div>`).join('')}</div></div>`;
+            pages.push(createP(1, scoreCard + `<div class="ila-dim-title">${dim1.dim}</div>` + renderPartial(dim1.vals[0], 0, 4)));
+            // HAL 2
+            pages.push(createP(2, renderPartial(dim1.vals[0], 4, 6) + renderPartial(dim1.vals[1], 0, 2, true) + renderPartial(dim1.vals[2], 0, 1, true)));
+            // HAL 3
+            pages.push(createP(3, renderPartial(dim1.vals[2], 1, 4, true) + renderPartial(dim1.vals[3], 0, 2, true) + `<div class="ila-dim-title" style="margin-top:20px;">${dim2.dim}</div>` + renderPartial(dim2.vals[0], 0, 1, true)));
+            // HAL 4
+            pages.push(createP(4, renderPartial(dim2.vals[0], 1, 3, true) + renderPartial(dim2.vals[1], 0, 3, true) + renderPartial(dim2.vals[2], 0, 2, true)));
+            // HAL 5
+            pages.push(createP(5, renderPartial(dim2.vals[3], 0, 3, true)));
+            // HAL 6 - SUMMARY
+            const d6 = document.createElement('div'); d6.className = 'sheet sheet-ila';
+            let resH = getHeader() + `<div class="resume-page-header"><div class="resume-title-main">Achievement Summary</div></div>`;
+            ilaStructure.forEach(d => {
+                const cleanDim = d.dim.replace(/^[0-9.]+\s*/, '');
+                resH += `<div class="resume-section"><div class="resume-dim-header">${cleanDim}</div><table class="resume-table"><thead><tr><th width="30%">Value</th><th width="15%">Average</th><th>Criteria Description</th></tr></thead><tbody>`;
+                d.vals.forEach(v => {
+                    const avg = calculateValueAverage(siswa, v);
+                    const p = avg >= 4.5 ? "5" : avg >= 3.5 ? "4" : avg >= 2.5 ? "3" : avg >= 1.5 ? "2" : "1";
+                    resH += `<tr><td class="bold">${v.name}</td><td class="center bold">${avg}</td><td class="resume-desc">${gradingDesc[p]}</td></tr>`;
                 });
-                return h;
-            };
-
-            pages.push(createPage(1, renderVals(p1Data), true, dim1.dim));
-            pages.push(createPage(2, renderVals(p2Data), false, ""));
-            pages.push(createPage(3, renderVals(p3Data), false, ""));
-            pages.push(createPage(4, renderVals(p4Data), false, dim2.dim, true));
+                resH += `</tbody></table></div>`;
+            });
+            resH += `<div class="ila-sig-section"><div class="ila-sig-box"><p>${conf.tgl}<br>Homeroom Teacher</p><div class="space-sign" style="height:60px;">${getSigHTML('ila')}</div><p><u><strong>${conf.wali}</strong></u></p></div></div>`;
+            d6.innerHTML = resH + getFooter(6);
+            pages.push(d6);
 
             return pages;
         }
 
-        function toTitleCase(str) { return str ? str.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : ""; }
+        // ==========================================
+        //  ELEMENT TO IMAGE & SIGNATURE HANDLING
+        // ==========================================
+        async function elementToImage(element) {
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                windowWidth: 210 * 3.7795275591, 
+                windowHeight: 297 * 3.7795275591
+            });
+            return canvas.toDataURL('image/jpeg', 0.9);
+        }
+
+        let activeDrag = null; let startX, startY, initL, initT;
+        document.addEventListener('mousedown', e => {
+            if(e.target.classList.contains('draggable-sig')){
+                e.preventDefault(); activeDrag = e.target;
+                startX = e.clientX; startY = e.clientY;
+                initL = parseInt(activeDrag.style.left||0); initT = parseInt(activeDrag.style.top||0);
+                activeDrag.style.cursor='grabbing';
+            }
+        });
+        document.addEventListener('mousemove', e => {
+            if(activeDrag){
+                activeDrag.style.left = (initL + e.clientX - startX) + "px";
+                activeDrag.style.top = (initT + e.clientY - startY) + "px";
+            }
+        });
+        document.addEventListener('mouseup', () => {
+            if(activeDrag){
+                const t = activeDrag.dataset.type;
+                sigData[t].x = parseInt(activeDrag.style.left);
+                sigData[t].y = parseInt(activeDrag.style.top);
+                saveData(t);
+                document.querySelectorAll(`.draggable-sig[data-type="${t}"]`).forEach(img => {
+                    img.style.left = activeDrag.style.left; img.style.top = activeDrag.style.top;
+                });
+                activeDrag.style.cursor='move'; activeDrag = null;
+            }
+        });
+
+        function getSigHTML(type) {
+            if (sigData[type] && sigData[type].img) {
+                return `<img src="${sigData[type].img}" class="draggable-sig" data-type="${type}" style="left:${sigData[type].x}px; top:${sigData[type].y}px;">`;
+            }
+            return '';
+        }
+
+        // ==========================================
+        //  BATCH PDF & ZIP GENERATION
+        // ==========================================
+        async function generateBatchPDF(type) {
+            const res = getDataAndConf(type);
+            if(!res) { Swal.fire('Oops...', 'Silakan upload file leger terlebih dahulu!', 'warning'); return; }
+            
+            const btn = type === 'dinas' ? document.querySelector('#app-dinas .bg-green') : document.querySelector('#app-ila .bg-green');
+            const progDiv = document.getElementById(type === 'dinas' ? 'progDinas' : 'progILA');
+            const progFill = document.getElementById(type === 'dinas' ? 'fillDinas' : 'fillILA');
+            const progText = document.getElementById(type === 'dinas' ? 'txtDinas' : 'txtILA');
+            const hiddenDiv = document.getElementById('hidden-processing');
+            
+            btn.disabled = true; progDiv.style.display = 'block';
+
+            try {
+                const pdfDoc = await PDFLib.PDFDocument.create();
+                const total = res.data.length;
+                const A4_W = 595.28;
+                const A4_H = 841.89;
+
+                for (let i = 0; i < total; i++) {
+                    const siswa = res.data[i];
+                    
+                    const pct = Math.round(((i+1)/total)*100);
+                    progFill.style.width = pct + "%";
+                    progText.innerText = `Mengonversi Data Siswa: ${i+1}/${total} (${siswa.Nama || siswa['Nama Siswa']})`;
+                    await new Promise(r => setTimeout(r, 10)); 
+
+                    hiddenDiv.innerHTML = '';
+                    const pages = (type === 'dinas') 
+                        ? generateDinasPages(siswa, res.conf, hiddenDiv) 
+                        : generateILAPages(siswa, res.conf);
+
+                    for (const pageEl of pages) {
+                        const textContent = pageEl.innerText.trim();
+                        const hasImages = pageEl.querySelectorAll('img').length > 0;
+                        const hasTables = pageEl.querySelectorAll('table').length > 0;
+                        
+                        if (textContent.length < 5 && !hasImages && !hasTables) continue;
+
+                        hiddenDiv.innerHTML = '';
+                        hiddenDiv.appendChild(pageEl);
+
+                        const imgData = await elementToImage(pageEl);
+                        const img = await pdfDoc.embedJpg(imgData);
+                        const page = pdfDoc.addPage([A4_W, A4_H]);
+                        page.drawImage(img, { x: 0, y: 0, width: A4_W, height: A4_H });
+                    }
+                }
+
+                progText.innerText = "Menyimpan File PDF...";
+                const pdfBytes = await pdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: "application/pdf" });
+                saveAs(blob, `Rapor ${type.toUpperCase()} ${res.conf.kelas}.pdf`);
+                
+                Swal.fire({ icon: 'success', title: 'Selesai!', text: 'File PDF berhasil diunduh.', timer: 2000 });
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire({ icon: 'error', title: 'Terjadi Kesalahan', text: err.message });
+            } finally {
+                hiddenDiv.innerHTML = '';
+                btn.disabled = false; progDiv.style.display = 'none';
+            }
+        }
+
+        async function generateBatchZIP(type) {
+            const res = getDataAndConf(type);
+            if(!res) { Swal.fire('Oops...', 'Upload file dulu!', 'warning'); return; }
+
+            const btn = type === 'dinas' ? document.querySelector('#app-dinas .bg-orange') : document.querySelector('#app-ila .bg-orange');
+            const progDiv = document.getElementById(type === 'dinas' ? 'progDinas' : 'progILA');
+            const progFill = document.getElementById(type === 'dinas' ? 'fillDinas' : 'fillILA');
+            const progText = document.getElementById(type === 'dinas' ? 'txtDinas' : 'txtILA');
+            const hiddenDiv = document.getElementById('hidden-processing');
+            
+            btn.disabled = true; progDiv.style.display = 'block';
+
+            const zip = new JSZip();
+            const total = res.data.length;
+            const A4_W = 595.28;
+            const A4_H = 841.89;
+
+            try {
+                for (let i = 0; i < total; i++) {
+                    const siswa = res.data[i];
+                    const name = siswa.Nama || siswa['Nama Siswa'];
+                    const no = siswa['No'] || (i+1);
+                    
+                    progFill.style.width = Math.round(((i+1)/total)*100) + "%";
+                    progText.innerText = `Memproses ZIP: ${name} (${i+1}/${total})`;
+                    await new Promise(r => setTimeout(r, 10));
+
+                    const pdfDoc = await PDFLib.PDFDocument.create();
+                    hiddenDiv.innerHTML = '';
+                    const pages = (type === 'dinas') 
+                        ? generateDinasPages(siswa, res.conf, hiddenDiv) 
+                        : generateILAPages(siswa, res.conf);
+
+                    for (const pageEl of pages) {
+                        const textContent = pageEl.innerText.trim();
+                        const hasImages = pageEl.querySelectorAll('img').length > 0;
+                        const hasTables = pageEl.querySelectorAll('table').length > 0;
+                        if (textContent.length < 5 && !hasImages && !hasTables) continue;
+
+                        hiddenDiv.innerHTML = '';
+                        hiddenDiv.appendChild(pageEl);
+
+                        const imgData = await elementToImage(pageEl);
+                        const img = await pdfDoc.embedJpg(imgData);
+                        const page = pdfDoc.addPage([A4_W, A4_H]);
+                        page.drawImage(img, { x: 0, y: 0, width: A4_W, height: A4_H });
+                    }
+
+                    const pdfBytes = await pdfDoc.save();
+                    zip.file(`${no} ${type.toUpperCase()} ${name}.pdf`, pdfBytes);
+                }
+
+                progText.innerText = "Mengompres ZIP...";
+                const content = await zip.generateAsync({type:"blob"});
+                saveAs(content, `Rapor ${type.toUpperCase()} ${res.conf.kelas} Per Siswa.zip`);
+                Swal.fire({ icon: 'success', title: 'Selesai!', text: 'File ZIP berhasil diunduh.', timer: 2000 });
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
+            } finally {
+                hiddenDiv.innerHTML = '';
+                btn.disabled = false; progDiv.style.display = 'none';
+            }
+        }
+
+        // ==========================================
+        //  HELPER FUNCTIONS
+        // ==========================================
+        function getScore(row, prefix, code) { 
+            const keys = Object.keys(row); 
+            const target = keys.find(k => k.includes(code) && k.toLowerCase().includes(prefix.toLowerCase())); 
+            return target ? row[target] : ''; 
+        }
+        
         function toggleStrike(el) { el.classList.toggle('is-crossed'); }
-        function getScore(row, prefix, code) { const keys = Object.keys(row); const target = keys.find(k => k.includes(code) && k.toLowerCase().includes(prefix.toLowerCase())); return target ? row[target] : ''; }
     </script>
 </body>
 </html>
