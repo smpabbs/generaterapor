@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Rapor Terpadu (V83 - Fixed ILA Summary)</title>
+    <title>Sistem Rapor Terpadu (V83 - Fixed ILA Summary & Strike Through)</title>
     
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -136,10 +136,11 @@
         .dinas-table { width: 100%; border-collapse: collapse; font-size: 11pt; margin-bottom: 5px; }
         .dinas-table th, .dinas-table td { border: 1px solid black; padding: 4px 6px; vertical-align: middle; }
         .dinas-table th { background: #f2f2f2; font-weight: bold; text-align: center; }
-        .cell-center { text-align: center !important; } .cell-left { text-align: left !important; } .cell-justify { text-align: justify !important; }
+        .cell-center { text-align: center !important; } 
+        .cell-left { text-align: left !important; } .cell-justify { text-align: justify !important; }
+        .cell-leftextra { text-align: justify !important; } .cell-justify { text-align: justify !important; }
         .dinas-footer { position: absolute; bottom: 10mm; left: 10mm; right: 10mm; height: 10mm; border-top: 2px solid black; padding-top: 5px; font-size: 10pt; display: flex; justify-content: space-between; align-items: center; }
         .catatan-box { text-align: justify; width: 100%; border: 1px solid black; padding: 10px; min-height: 80px; box-sizing: border-box; font-size: 11pt; margin-bottom: 10px; }
-        .cell-leftextra { text-align: justify !important; } .cell-justify { text-align: justify !important; }
         .signature-container { margin-top: 20px; }
         .signature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .sig-box { text-align: center; position: relative; }
@@ -194,7 +195,8 @@
         .ila-sig-box { text-align: center; width: 220px; position: relative; }
         .ila-sig-box p { margin: 4px 0; line-height: 1.2; } 
         
-        .toggle-text { cursor: pointer; } .is-crossed { text-decoration: line-through; color: #555; }
+        .toggle-text { cursor: pointer; } 
+        .is-crossed { text-decoration: line-through !important; color: #555 !important; }
 
         /* --- DRAGGABLE SIGNATURE STYLE --- */
         .draggable-sig { 
@@ -384,7 +386,7 @@
             <!-- KEPALA SEKOLAH DAN TTD KEPALA SEKOLAH -->
             <fieldset>
                 <legend class="leg-dinas">✍️ Kepala Sekolah & Tanda Tangan</legend>
-                <div class="input-group"><label>Nama Kepala Sekolah</label><input type="text" id="dinasKepsek" oninput="saveData('dinas')" value="Tri Wijayanti, M.Pd"></div>
+                <div class="input-group"><label>Nama Kepala Sekolah</label><input type="text" id="dinasKepsekNama" oninput="saveData('dinas')" value="Tri Wijayanti, M.Pd"></div>
                 <div class="input-group"><label>NIP Kepala Sekolah</label><input type="text" id="dinasNIPKepsek" oninput="saveData('dinas')" value="-"></div>
                 
                 <div class="signature-section">
@@ -622,6 +624,32 @@
 
         // VARIABEL UNTUK FLOATING BUTTON
         let currentAppType = null;
+
+        // ==========================================
+        //  STRIKE-THROUGH STATE FIX
+        // ==========================================
+        let extraStrikeState = {};
+
+        function toggleStrike(el, siswaId, type) {
+            // Toggle inline style (untuk html2canvas)
+            if (el.style.textDecoration === 'line-through') {
+                el.style.textDecoration = 'none';
+                el.style.color = '';
+            } else {
+                el.style.textDecoration = 'line-through';
+                el.style.color = '#555';
+            }
+            
+            // Juga toggle class (untuk tampilan di browser)
+            el.classList.toggle('is-crossed');
+            
+            // Simpan state
+            if (!extraStrikeState[siswaId]) extraStrikeState[siswaId] = {};
+            extraStrikeState[siswaId][type] = el.style.textDecoration === 'line-through';
+            
+            // Simpan ke localStorage
+            localStorage.setItem('extraStrikeState', JSON.stringify(extraStrikeState));
+        }
 
         // ==========================================
         //  UTILITY FUNCTIONS
@@ -896,6 +924,7 @@
             }).then((result) => {
                 if (result.isConfirmed) { 
                     localStorage.removeItem(LS_KEY); 
+                    localStorage.removeItem('extraStrikeState');
                     location.reload(); 
                 }
             });
@@ -1010,6 +1039,15 @@
             if (immediate) {
                 updateSignatureOnly(type);
             }
+        }
+
+        function delayedPreviewUpdate(type, immediate) {
+            setTimeout(() => {
+                const slider = document.getElementById(`zoomSlider${type.charAt(0).toUpperCase() + type.slice(1)}`);
+                if (slider) {
+                    updateSigZoom(type, slider.value, immediate);
+                }
+            }, 100);
         }
 
         function resetSigSize(type) {
@@ -1208,6 +1246,10 @@
                 
                 const nipKepsekEl = document.getElementById('dinasNIPKepsek');
                 if (nipKepsekEl) cur.dinas.nipKepsek = nipKepsekEl.value;
+                
+                // Simpan juga nama kepala sekolah yang baru
+                const kepsekNamaEl = document.getElementById('dinasKepsekNama');
+                if (kepsekNamaEl) cur.dinas.kepsekNama = kepsekNamaEl.value;
             } else {
                 ['sekolah', 'tgl', 'wali', 'kelas'].forEach(k => {
                     const el = document.getElementById('ila' + toTitleCase(k));
@@ -1245,8 +1287,14 @@
                 
                 if(saved.dinas) {
                     Object.keys(saved.dinas).forEach(k => { 
-                        const el = document.getElementById('dinas' + toTitleCase(k)); 
-                        if(el) el.value = saved.dinas[k]; 
+                        // Handle kepsekNama separately
+                        if (k === 'kepsekNama') {
+                            const el = document.getElementById('dinasKepsekNama');
+                            if (el) el.value = saved.dinas[k];
+                        } else {
+                            const el = document.getElementById('dinas' + toTitleCase(k)); 
+                            if(el) el.value = saved.dinas[k]; 
+                        }
                     });
                     
                     const nipKepsekEl = document.getElementById('dinasNIPKepsek');
@@ -1261,6 +1309,12 @@
                 });
                 
                 setTimeout(initSigPreviews, 100);
+            }
+            
+            // Load strike state
+            const savedStrike = localStorage.getItem('extraStrikeState');
+            if (savedStrike) {
+                extraStrikeState = JSON.parse(savedStrike);
             }
             
             document.getElementById('fileDinas').addEventListener('change', (e) => handleUpload(e, 'dinas'));
@@ -1390,13 +1444,17 @@
         }
 
         // ==========================================
-        //  GENERATOR DINAS PAGES
+        //  GENERATOR DINAS PAGES DENGAN FIX STRIKE-THROUGH
         // ==========================================
         function generateDinasPages(siswa, conf, measureContainer) {
             let pageNum = 1;
             const pages = [];
             const row = (n,m,v,d) => `<tr><td class="cell-center">${n}</td><td class="cell-left">${m}</td><td class="cell-center bold">${safeVal(v)}</td><td class="cell-justify" style="font-size:10pt;">${safeVal(d)}</td></tr>`;
             const sakit=siswa['SAKIT ']||siswa['Sakit']||'-', izin=siswa['IJIN']||siswa['Ijin']||'-', alpha=siswa['TANPA KETERANGAN']||siswa['Tanpa Keterangan']||'-';
+            
+            const siswaId = siswa.NIS || siswa.Nama || `siswa_${Math.random().toString(36).substr(2, 9)}`;
+            const pramukaStriked = extraStrikeState[siswaId]?.pramuka || false;
+            const pmrStriked = extraStrikeState[siswaId]?.pmr || false;
             
             const headerHTML = `<div class="header-container"><table class="dinas-header"><colgroup><col style="width:130px;"><col style="width:10px;"><col><col style="width:130px;"><col style="width:10px;"><col style="width:100px;"></colgroup><tr><td>Nama</td><td>:</td><td>${toTitleCase(siswa.Nama)}</td><td>Kelas</td><td>:</td><td>${conf.kelas}</td></tr><tr><td>NIS / NISN</td><td>:</td><td>${siswa.NIS||'-'} / ${siswa.NISN||'-'}</td><td>Fase</td><td>:</td><td>${conf.fase}</td></tr><tr><td>Nama Sekolah</td><td>:</td><td>${conf.sekolah}</td><td>Semester</td><td>:</td><td>${conf.sem}</td></tr><tr><td>Alamat </td><td>:</td><td style="font-size:11pt;">${conf.alamat}</td><td>Tahun Pelajaran</td><td>:</td><td>${conf.thn}</td></tr></table><div class="header-separator"></div></div>`;
             const titleHTML = `<h1 class="dinas-title">LAPORAN HASIL BELAJAR</h1>`;
@@ -1459,10 +1517,36 @@
 
             appendBlock(`<h3 class="dinas-sub">A. Intrakurikuler</h3>`);
             appendTable(`<tr><th width="5%">No</th><th width="35%">Mata Pelajaran</th><th width="10%">Nilai Akhir</th><th>Capaian Kompetensi</th></tr>`, [
-                row(1, "Pendidikan Agama Islam dan Budi Pekerti", siswa.PAI, siswa.des_PAI), row(2, "Pendidikan Pancasila", siswa.Pkn, siswa.des_Pkn), row(3, "Bahasa Indonesia", siswa.Indo, siswa.des_indo), row(4, "Matematika (Umum)", siswa.Math, siswa.des_Math), row(5, "Ilmu Pengetahuan Alam (IPA)", siswa.IPA, siswa.des_IPA), row(6, "Ilmu Pengetahuan Sosial (IPS)", siswa.IPS, siswa.des_IPS), row(7, "Bahasa Inggris", siswa.English, siswa.des_english), row(8, "Seni dan Budaya", siswa.NILAI_SBK, siswa.des_SBK), row(9, "Pendidikan Jasmani, Olahraga, dan Kesehatan", siswa.Sport, siswa.des_Sport), row(10, "Informatika", siswa.ICT, siswa.des_ICT), row(11, "Bahasa Jawa", siswa.jawa, siswa.des_jawa)
+                row(1, "Pendidikan Agama Islam dan Budi Pekerti", siswa.PAI, siswa.des_PAI), row(2, "Pendidikan Pancasila", siswa.Pkn, siswa.des_Pkn), row(3, "Bahasa Indonesia", siswa.Indo, siswa.des_indo), row(4, "Matematika (Umum)", siswa.Math, siswa.des_Math), row(5, "Ilmu Pengetahuan Alam (IPA)", siswa.IPA, siswa.des_IPA), row(6, "Ilmu Pengetahuan Sosial (IPS)", siswa.IPS, siswa.des_IPS), row(7, "Bahasa Inggris", siswa.English, siswa.des_english), row(8, "Seni dan Budaya", siswa.NILAI_SBK, siswa.des_SBK), row(9, "Pendidikan Jasmani, Olahraga, dan Kesehatam", siswa.Sport, siswa.des_Sport), row(10, "Informatika", siswa.ICT, siswa.des_ICT), row(11, "Bahasa Jawa", siswa.jawa, siswa.des_jawa)
             ]);
             appendBlock(`<h3 class="dinas-sub">B. Kokurikuler</h3><table class="dinas-table"><tr><th>Deskripsi</th></tr><tr><td style="height:60px; text-align:justify;">${siswa['Deskripsi Kokurikuler']||'-'}</td></tr></table>`);
-            appendBlock(`<h3 class="dinas-sub">C. Ekstrakurikuler</h3><table class="dinas-table"><tr><th>No</th><th>Kegiatan</th><th>Predikat</th><th>Keterangan</th></tr><tr><td class="cell-center">1</td><td class="cell-left"><span class="toggle-text" onclick="toggleStrike(this)">Kepramukaan</span> / <span class="toggle-text" onclick="toggleStrike(this)">PMR</span></td><td class="cell-center bold">${siswa['Predikat']||'-'}</td><td class="cell-leftextra">${siswa['Deskripsi PRAMUKA / PMR']||'-'}</td></tr><tr><td class="cell-center">2</td><td class="cell-left">${siswa.NAMA_SD||'Self Dev'}</td><td class="cell-center bold">${siswa.predikat||'-'}</td><td class="cell-leftextra">${siswa.des_SD||'-'}</td></tr></table>`);
+            
+            // FIXED: Bagian ekstrakurikuler dengan strike-through yang persist
+            appendBlock(`
+                <h3 class="dinas-sub">C. Ekstrakurikuler</h3>
+                <table class="dinas-table">
+                    <tr><th>No</th><th>Kegiatan</th><th>Predikat</th><th>Keterangan</th></tr>
+                    <tr>
+                        <td class="cell-center">1</td>
+                        <td class="cell-left">
+                            <span class="toggle-text ${pramukaStriked ? 'is-crossed' : ''}" 
+                                  style="${pramukaStriked ? 'text-decoration: line-through !important; color: #555 !important;' : ''}"
+                                  onclick="toggleStrike(this, '${siswaId}', 'pramuka')">Kepramukaan</span> / 
+                            <span class="toggle-text ${pmrStriked ? 'is-crossed' : ''}" 
+                                  style="${pmrStriked ? 'text-decoration: line-through !important; color: #555 !important;' : ''}"
+                                  onclick="toggleStrike(this, '${siswaId}', 'pmr')">PMR</span>
+                        </td>
+                        <td class="cell-center bold">${siswa['Predikat']||'-'}</td>
+                        <td class="cell-leftextra">${siswa['Deskripsi PRAMUKA / PMR']||'-'}</td>
+                    </tr>
+                    <tr>
+                        <td class="cell-center">2</td>
+                        <td class="cell-leftextra">${siswa.NAMA_SD||'Self Dev'}</td>
+                        <td class="cell-center bold">${siswa.predikat||'-'}</td>
+                        <td class="cell-left">${siswa.des_SD||'-'}</td>
+                    </tr>
+                </table>`);
+            
             appendBlock(`<h3 class="dinas-sub">D. Ketidakhadiran</h3><table class="dinas-table" style="width:50%"><tr><td class="cell-left">Sakit</td><td class="cell-left">: ${sakit} hari</td></tr><tr><td class="cell-left">Izin</td><td class="cell-left">: ${izin} hari</td></tr><tr><td class="cell-left">Tanpa Keterangan</td><td class="cell-left">: ${alpha} hari</td></tr></table>`);
             appendBlock(`<h3 class="dinas-sub">E. Catatan Wali Kelas</h3><div class="catatan-box">${siswa['CATATAN WALAS']||'-'}</div>`);
             
@@ -1563,12 +1647,25 @@
         //  BATCH PDF & ZIP GENERATION
         // ==========================================
         async function elementToImage(element) {
+            // Force reflow untuk memastikan rendering yang benar
+            element.style.display = 'none';
+            element.offsetHeight; // Trigger reflow
+            element.style.display = '';
+            
+            // Beri sedikit delay untuk memastikan style diterapkan
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
             const canvas = await html2canvas(element, {
                 scale: 2,
                 useCORS: true,
                 logging: false,
                 windowWidth: 210 * 3.7795275591, 
-                windowHeight: 297 * 3.7795275591
+                windowHeight: 297 * 3.7795275591,
+                backgroundColor: '#ffffff',
+                ignoreElements: (element) => {
+                    // Pastikan elemen yang di-strike dirender
+                    return false;
+                }
             });
             return canvas.toDataURL('image/jpeg', 0.9);
         }
@@ -1702,11 +1799,6 @@
                 btn.disabled = false; progDiv.style.display = 'none';
             }
         }
-
-        // ==========================================
-        //  HELPER FUNCTIONS
-        // ==========================================
-        function toggleStrike(el) { el.classList.toggle('is-crossed'); }
     </script>
 </body>
 </html>
